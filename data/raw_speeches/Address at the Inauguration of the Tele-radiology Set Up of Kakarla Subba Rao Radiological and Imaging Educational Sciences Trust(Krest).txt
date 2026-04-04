@@ -1,0 +1,35 @@
+taken from: https://presidentofindia.nic.in/dr-apj-abdul-kalam/speeches
+[SOURCE:
+Address at the Inauguration of the Tele-radiology Set Up of Kakarla Subba Rao Radiological and Imaging Educational Sciences Trust(Krest), Hyderabad, Andhra Pradesh : 01.02.2007 ]
+[TYPE: Speech]
+[TOPIC: Tele-radiology: A New Dimension to Medicare]
+
+"Technology Outreach vital for rural Transformation"
+
+I am delighted to participate in the inauguration of the Tele-radiology set up of Kakarla Subba Rao Radiological and Imaging Educational Sciences Trust (KREST). I am happy that KREST has been founded with the aim of promoting radiological and imaging education, providing tele-radiological consultation, rendering free services to the poor patients and publishing articles and books in advanced radiology. I am sure tele-radiology will become an important tool for outreach to rural citizens. I extend my greetings to the organizers, radiologists, doctors, medical educators, medical technologists, para-medical personnel, students and distinguished guests. I would like to discuss on the topic ?Tele-Radiology: A New Dimension to Medicare?.
+
+I am delighted to see Prof. Kakarla Subbarao, a pioneer in radiology, who is known to me for over two decades. The more I understand his life, the more I am inspired. He brought tertiary health care to India. Part of his own house has been transformed into a school. Now he has given the other part of the house for KREST. Recently in the Republic Day address, the topic of my talk was ?what I can give to the nation?? Here, in front of me I see Prof Kakarla Subbarao - giving medical care (life time), giving for medical research and giving resources and time for education. Prof. Kakarla Subbarao is indeed an embodiment of giving.
+
+Tele-radiology: Potential
+
+Tele-radiology as I understand is a means of electronically transmitting radiographic images of the patient and consultative text from one location to another through digital, computer-assisted transmission. Within a large hospital, tele-radiology can be used to send images_new from one department to another, particularly for emergency treatment of patients in intensive care units. Acquisition of data in DICOM Compatible form is emerging as an essential requirement for tele-radiology.
+
+Technology enablers
+
+While most tele-radiology systems installed in the country, over the last decade were intended for on-call purposes, the past two years have seen a rapid increase in the use of tele-radiology to link hospitals and affiliated satellite facilities, other primary hospitals, and imaging centers. This has been possible due to the maturing of a number of enabling technologies such as high-speed telecommunications networks, improved data compression techniques, quality standards and reduction in cost.
+
+Reach the unreached
+
+The nation at present has only less than 6000 radiologists. The introduction of tele-radiology will not only enable efficient utilization of this scarce expertise but also enable training and continuing education of radiologists throughout the country. This can significantly improve access to imaging experts for needy patients living in remote or rural areas and also enable world-wide consultation of complex medical conditions.
+
+Radiology Equipment Technology
+
+The inherent benefit of digital imaging as a diagnostic tool and the tele-radiology should be taken as an opportunity for reaching the unreached in a cost effective manner. This would need Indian medical equipment industry to gear up for designing and manufacturing DICOM Compatible X-ray and other imaging equipment which can be optimally used in conjunction with tele-radiology. With the population of one billion, the number of equipment needed will be so large, the cost must come down drastically. Simultaneously, while we consider the saving due to the consumable in films and other forms the life time cost will become affordable to the common man. The radiologists assembled here, consistent with the increased use of tele-radiology in the coming years, may like to plan training of specialists in new-technology, training of para-medical personnel and introduction of tele-radiology as an important element of quality healthcare service. Tele-radiology may also be very effective for providing health care in emergencies for huge floating population engaged in business and tourism.
+
+Conclusion
+
+In conclusion, tele-radiology opens up new opportunities for providing quality health care to the people in the remotest areas and development of skill in the country. It will also give a great boost to manufacture of indigenous DICOM compatible equipment. The availability of tele-radiology in hospitals enables easy data storage and retrieval of patients? history and use of this history as valuable diagnostic tool to deal with the current medical situation.
+
+With these words, I inaugurate the tele-radiology set up of KREST. My best wishes to all the members of KREST in this new venture and in their mission of providing cost effective diagnostics to the needy.
+
+May God bless you.
