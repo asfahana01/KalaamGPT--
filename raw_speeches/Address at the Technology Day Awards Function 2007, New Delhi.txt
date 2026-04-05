@@ -1,0 +1,94 @@
+taken from: https://presidentofindia.nic.in/dr-apj-abdul-kalam/speeches
+
+[SOURCE: Address at the Technology Day Awards Function 2007, New Delhi : 11.05.2007]
+[TYPE: Speech]
+[TOPIC: Technology and Innovation power Competitiveness]
+
+"Technology is a non-linear tool which can effect fundamental changes in economic competitiveness"
+
+I am very happy to participate in the National Technology Day Award Function 2007 organized by Ministry of Science and Technology. This day reminds us of our resolve to achieve self reliance in indigenous technologies needed for societal transformation. My greetings to the organizers, scientists, technologists and entrepreneurs and congratulations to the award winners. While I am with you, I would like to talk to you on the topic "technology and innovation power competitiveness".
+
+Economic development and prosperity
+
+Since the audience consists of scientists and technologists, entrepreneurs, members from academia and policy makers, let me share with you the linkages among economic development, competitiveness, technology and marketing and evolution of a creative leaders.
+
+- Nation?s Economic development is powered by competitiveness.
+
+- The competitiveness is powered by knowledge power.
+
+- The knowledge power is powered by Technology and innovation.
+
+- The Technology and innovation are powered by resource investment.
+
+- The Resource investment is powered by revenue and return on Investment.
+
+- The Revenue is powered by Volume and repeat sales through customer loyalty.
+
+- The customer loyalty is powered by Quality and value of products.
+
+- Quality and value of products is powered by Employee Productivity and innovation.
+
+- The Employee Productivity is powered by Employee Loyalty, employee satisfaction and working environment.
+
+- The Working Environment is powered by management stewardship.
+
+- Management stewardship is powered by Creative leadership.
+
+For success in all missions, we need creative leaders. Creative leadership means exercising the vision to change the traditional role from the commander to the coach, manager to mentor, from director to delegator and from one who demands respect to one who facilitates self-respect. For a prosperous and developed India, the important thrust will be on the growth in the number of creative leaders in every laboratory, institution, every industry, every department and finally every organization in the ministry. Let me now discuss two recent missions of Indian Polar Satellite Launch Vehicle programme for technology development and commercial applications.
+
+PSLV-C7 Mission orbiting four satellites, including Space capsule Recovery Experiment (SRE)
+
+On January 10, 2007, the country witnessed in real time, the flight of PSLV-C7 from Satish Dhawan Space Centre (SDSC) SHAR, Sriharikota, successfully orbiting four satellites -- India?s CARTOSAT-2 and Space Capsule Recovery Experiment (SRE-1), Indonesia?s LAPAN-TUBSAT and Argentina?s PEHUENSAT-1 into a 635 km polar orbit.
+
+Recovery of Space Capsule Recovery Experiment (SRE), a major technological feat
+
+SRE-1 was successfully recovered on January 22, 2007, after being maneuvered to reenter the earth?s atmosphere and descend over Bay of Bengal about 140 km East of Sriharikota. The critical maneuvers were executed from the Spacecraft Control Centre (SCC) of ISRO at Bangalore supported by a network of ground stations in India and abroad.
+
+On January 22, 2007, the re-orientation of SRE-1 capsule for de-boost operations commenced at 08:42 am (IST). The capsule made its re-entry at 09:37 am at an altitude of 100 km with a velocity of 8 km/sec (29,000 km per hour). During its reentry, the capsule was protected from the intense heat by carbon phenolic ablative material and silica tiles on its outer surface. SRE-1 splashed down in the Bay of Bengal with a velocity of 12 m/sec (about 43 km per hour) at 09:46 am. The flotation system, which immediately got triggered, kept the capsule floating. Recovery operations were supported and carried out by the Indian Coast Guard and Indian Navy using ships, aircraft and helicopters. During its stay in orbit for 12 days, two experiments on board SRE-1 were conducted under micro gravity conditions.
+
+The successful launch, in-orbit operation of the on board experiments and reentry and recovery of SRE-1 have demonstrated India?s capability in important technologies like aero-thermo structures, deceleration and flotation systems, navigation, guidance and control. Now, I would like to talk about another important PSLV mission which shows our ability to provide state-of-the-art commercial launch services to an international customer. I had mentioned about this to the European Union of Parliament within two days of the launch.
+
+PSLV C8 Commercial launch for international customer
+
+On 23rd April 2007, at 15.30 hrs IST, the Indian PSLV-C8 lifted off majestically from SDSC, SHAR and in about twenty minutes, placed the 352 Kg Italian Satellite AGILE into a circular orbit of 550 km with an inclination of 2.47 degrees with a precise orbital accuracy of 1 km in altitude and 0.03 degrees in inclination. AGILE is an X-ray and Gamma ray astronomical satellite of the Italian Space Agency (ASI), Rome. This scientific satellite is an excitement not only for Italian and European scientists but also to the Indian and the entire space scientific community. PSLV-C8 is the first major commercial launch for a primary satellite.
+
+What is the message? Starting with the design and development in the late eighties, with its first successful flight in 1994, PSLV through ten consecutive successful flights has orbited eight Indian remote sensing satellites, an amateur radio satellite, HAMSAT, a recoverable space capsule, SRE-1, and six small satellites for foreign customers in addition to AGILE. Besides, it has launched India?s exclusive meteorological satellite, Kalpana-1, into Geosynchronous Transfer Orbit (GTO). PSLV will also be used to launch India?s first spacecraft mission to moon, Chandrayaan-1, during 2008. Such a development in indigenous high technology from concept to meeting the stringent performance and time specifications of commercial customer was possible due to a mission mode partnership of ISRO?s centres of excellence, with industries and academic institutions. Likewise, I would suggest that the industries to take up concept to completion programme based on their core competence for producing goods and services which will have large impact both nationally and internationally. That is how, science and technology can lead to higher level of competitiveness in the industry. Let me now discuss an important technological milestone achieved by our defence scientists.
+
+Missile intercepts another missile
+
+A few months back, I was in a place called Chandipur at Sea off the coast of Orissa, where the preparations for a major missile test were being carried out. What was this test? This test was to intercept an incoming missile presumably from an adversary by our missile. Imagine, an incoming missile is traveling at a speed of 1200 meters per second, very high above the ground. You cannot judge it with your eyes. There are telemetry systems continuously radiating performance information about the missile. We make use of radars, which work by bouncing off radio waves and sensing the echo to find out the position and speed of the target. These radars are very powerful so that they can detect precisely a small object hundreds of kilometers away. Having detected a fast moving target what do we do next? We must then decide, ?is this a missile aimed at us?? To do this we must make use of extremely powerful fast computers on the ground running millions of calculations per second. Based on these calculations, if we conclude that the object is indeed a missile coming towards us, then steps must be taken to intercept the target missile. What are these steps? These steps are to find out where is the missile launched from? Where is it going to impact and then to see which of our own missile can intercept this incoming missile. You can very well imagine the minimum time available for the required operations. Having done this, the next step is to launch our own indigenously designed missile at the correct time from the designated launch pad. Are our jobs over? No. Having launched our own missile we must guide towards the enemy missile. This is done by guiding our own missile through a radio link to track where is the enemy missile right now. As our missile approaches the target, the missile opens its own small radar called a seeker to accurately locate the target and then to home on to it, intercept and destroy.
+
+All these were done successfully by our defence scientists during November 2006 in the Wheeler Island and they had a direct interception of the incoming missile which they destroyed. This is a major achievement for our country as the test involved the development and integration of many technologies, based on the work of a large number of teams. This has been made possible because of the continuous development by DRDO in various missile systems in close collaboration with industry, other national research laboratories and academic institutions. Similarly, I would suggest industries to consolidate the cumulative development of technologies taking place in various S & T institutions in the country and develop products using state-of-the-art technology for ensuring availability of competitive products for both national and international market. Now, let me present a few thoughts on convergence of technologies.
+
+Convergence of Technologies
+
+Information technology and communication technology have already converged leading to Information and Communication Technology (ICT). Information Technology combined with bio-technology has led to bio-informatics. Now, Nano-technology is knocking at our doors. It is the field of the future that will replace microelectronics and many fields with tremendous application potential in the areas of medicine, electronics and material science. When Nano technology and ICT meet, integrated silicon electronics, photonics are born and it can be said that material convergence will happen. With material convergence and biotechnology linked, a new science called Intelligent Bioscience will be born which would lead to a disease free, happy and more intelligent human habitat with longevity and high human capabilities. Convergence of bio-nano-info technologies can lead to the development of nano robots. Nano robots when they are injected into a patient, my expert friends say, will diagnose and deliver the treatment exclusively in the affected area and then the nano-robot gets digested as it is a DNA based product.
+
+Convergence of ICT, aerospace and Nano technologies will emerge and revolutionize the aerospace industry and electronics leading to nano computing systems. This technological convergence will enable building of cost effective low weight, high payload, and highly reliable aerospace systems, which can be used for inter-planetary transportation.
+
+Potential collaboration with Greece
+
+Recently, I was in Greece and interacted with the scientists of National Centre for Scientific Research. There I discussed with them the application of nano-science and technology in a number of societal programmes. I would like to mention some of the important areas.
+
+Agriculture and food processing: We are in the mission of generating 400 million tonnes of food grains with reduced land, with reduced water and with reduced workforce. It is essential to take up agro food processing in a big way which will bring employment potential in rural areas.
+
+Some of the possible areas of research in agriculture and food processing are: Nano-porous zeo-lites for slow-release and efficient doses of water and fertilizers for plants, and of nutrients and drugs for livestock, nano-capsules for herbicide delivery, nano sensors for soil quality and for plant health monitoring. Nano-composites for plastic film coatings used in food packaging, antimicrobial nano-emulsions for applications in decontamination of food equipment, packaging or food processing are other important areas of research.
+
+Infrastructure: India is aspiring to build hundred million houses within next ten years. The infrastructure development in metropolitan and tier-2 cities needs to be enhanced in the form of new bridges, airports, marketing complexes and industrial units. 40% of the rural areas need to be covered with all weather roads; we need to double the present national highways ratio per 100 square kilometer area.
+
+Nano-science material and technology research can definitely provide a solution. Our research focus in the nano-material should be towards cheaper rural housing, surfaces, coatings, use of concrete with heat and light exclusion. Can we develop heat resistance nano-material to block ultraviolet and infra red radiation? We should also develop a nano-molecular structure to make concrete more robust to water seepage, with self cleaning surfaces and bio active coating.
+
+Energy: Energy Independence is India?s first and highest priority. We are determined to achieve this by the year 2030 through three different sources namely renewable energy (solar, wind and hydro power), electrical power from nuclear energy and bio-fuel for the transportation sector. Energy independence throws very important technological challenges to the world: The solar cell efficiency has to increase from the present 15% to 20% to 45 to 50% through intensified research on CNT based solar cells. For thorium reactors, as it is known, thorium is a non-fissile material. It has to be converted into a fissile material using Fast Breeder Technology. In the Bio-fuel area, the challenge is bio-fuel plantation for higher yield, esterification technologies for the higher output and the modification to automobile power plants. These three research areas definitely need intensive cooperation between Greece and India.
+
+Safe Drinking Water: We have embarked on a mission for water purification, water de-toxification, water desalination through nano membranes and nano sensor for detecting contaminants and pathogens? How the nano-porous zeo-lites, nano-porous polymers can be used to design and develop products for water purification.
+
+Healthcare: India has already patented the development of drug delivery system using nano-technology. Stem cell research in India is advancing in the field of cardiology, ophthalmology, diabetic research, endocrinology, oncology and immunology. It is essential to develop drug delivery system for stem cell implantation into the specific organs of the body related to the ailment using nano technology. During my discussions, the scientists in Greece were keen to work with Indian laboratories and industries in such frontier areas. I would suggest the Ministry of Science and Technology to take the lead and create a linkage between R & D laboratories, educational institutions and industries of India and Greece for working in frontier areas of research leading to rapid commercialization of state-of-the-art products needed in the international market.
+
+Conclusion
+
+Dear friends, as you all know, our small scale industries have spread throughout the country and total number exceeds three million with a tremendous impact on Indian economy. These industries need continuous technological updation and infusion of new technologies. I would suggest that the Hon?ble Minister of Science and Technology may facilitate laboratory, small scale industry partnership in coordination with the Ministry of Small Scale Industries. Such collaboration will enable world class products emanating from our small scale industries.
+
+Once again let me congratulate the award winners and my best wishes to all of you in your mission of promoting scientific discoveries, technological inventions and innovations for societal transformation.
+
+May God bless you. 
+Dr. A. P. J. Abdul Kalam
