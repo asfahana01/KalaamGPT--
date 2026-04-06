@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KalaamGPT 🚀</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>🚀 KalaamGPT</h1>
+        <p>Inspired by Dr. A.P.J. Abdul Kalam — Scientist, President, Visionary</p>
+    </div>
+
+    <!-- Chat Window -->
+    <div class="chat-container">
+        <div class="chat-window" id="chatWindow">
+
+            <!-- Welcome message -->
+            <div class="message bot-message">
+                <div class="avatar">🚀</div>
+                <div class="bubble">
+                    Vanakkam! I am KalaamGPT, inspired by the vision and wisdom of 
+                    Dr. A.P.J. Abdul Kalam. Ask me anything about his thoughts on 
+                    education, science, youth, or nation-building!
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Typing Indicator -->
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="avatar">🚀</div>
+            <div class="bubble">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <input 
+                type="text" 
+                id="userInput" 
+                placeholder="Ask Dr. Kalam anything..." 
+                autocomplete="off"
+            />
+            <button id="sendBtn" onclick="sendMessage()">Send ➤</button>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
