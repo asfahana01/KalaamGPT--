@@ -93,3 +93,92 @@ KalaamGPT/
 | **Frontend** | HTML, CSS, Vanilla JavaScript |
 
 ---
+
+ 📚 Knowledge Base
+
+| Source | Count |
+|---|---|
+| Books by Dr. Kalam | 8 |
+| Speeches & Addresses | 33 |
+| **Total Words** | **2,76,000+** |
+
+**Books included:**
+- Wings of Fire
+- Ignited Minds
+- India 2020
+- Turning Points
+- My Journey
+- Transcendence
+- You Are Born to Blossom
+- A Vision for the New Millennium
+
+---
+
+ ⚙️ Setup & Installation
+
+ Prerequisites
+- Python 3.10+
+- Git
+
+ 1. Clone the Repository
+```bash
+git clone https://github.com/asfahana01/KalaamGPT--.git
+cd KalaamGPT
+```
+
+ 2. Create Virtual Environment
+```bash
+python -m venv venv
+venv\Scripts\activate         Windows
+source venv/bin/activate      Mac/Linux
+```
+
+ 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+ 4. Set Up API Keys
+
+Create a `.env` file in the root directory:
+```
+GROQ_API_KEY=your_groq_api_key_here
+```
+
+Get a free Groq API key at: https://console.groq.com
+
+ 5. Add Your Knowledge Base
+
+Place PDF books in `raw_data/` and run:
+```bash
+python convertPDF.py
+python add_speeches.py
+```
+
+ 6. Build the Vector Database
+```bash
+python ingest.py
+```
+> ⚠️ This takes 3–7 minutes on first run.
+
+ 7. Run KalaamGPT
+```bash
+python app.py
+```
+
+Open your browser at: **http://localhost:5000** 🚀
+
+---
+
+💬 Example Conversations
+
+**Q: What is Dr. Kalam's vision for Indian youth?**
+> *"Dr. Kalam believed the youth of India are the nation's greatest asset. He emphasized the importance of dreaming big, working hard, and combining scientific temper with strong values..."*
+
+**Q: What did Kalam say about failure?**
+> *"Dr. Kalam saw failure as a stepping stone to success. Drawing from his own experience with ISRO's early rocket failures, he taught that leaders must absorb failure and share success..."*
+
+**Q: How should India become a developed nation?**
+> *"Dr. Kalam outlined five key areas: agriculture & food processing, infrastructure, education & healthcare, information technology, and self-reliance in critical technologies..."*
+
+---
