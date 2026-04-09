@@ -181,4 +181,33 @@ Open your browser at: **http://localhost:5000** 🚀
 **Q: How should India become a developed nation?**
 > *"Dr. Kalam outlined five key areas: agriculture & food processing, infrastructure, education & healthcare, information technology, and self-reliance in critical technologies..."*
 
+---🗺️ Roadmap
+
+- ✅Knowledge base creation (books + speeches)
+- ✅ RAG pipeline with ChromaDB
+- ✅ Groq LLaMA integration
+- ✅ Flask backend
+- ✅ Chat UI
+- [ ] Image classification (multimodal support)
+- [ ] Ethical alignment layer
+- [ ] Deployment on HuggingFace Spaces
+- [ ] Mobile responsive design
+- [ ] Voice input/output
+
 ---
+
+ 🙏 Acknowledgements
+
+This project is built as a tribute to **Dr. Avul Pakir Jainulabdeen Abdul Kalam** (1931–2015) — whose life, words, and vision continue to inspire millions of young Indians and people around the world.
+
+> *"You have to dream before your dreams can come true."*
+
+---
+
+ 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+<p align="center">Built with ❤️ inspired by the Missile Man of India</p>
