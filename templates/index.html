@@ -1,53 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KalaamGPT 🚀</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KalaamGPT | Conversations</title>
+    <link rel="stylesheet" href="/static/style.css" />
 </head>
-<body>
-
-    <!-- Header -->
-    <div class="header">
-        <h1>🚀 KalaamGPT</h1>
-        <p>Inspired by Dr. A.P.J. Abdul Kalam — Scientist, President, Visionary</p>
-    </div>
-
-    <!-- Chat Window -->
-    <div class="chat-container">
-        <div class="chat-window" id="chatWindow">
-
-            <!-- Welcome message -->
-            <div class="message bot-message">
-                <div class="avatar">🚀</div>
-                <div class="bubble">
-                    Vanakkam! I am KalaamGPT, inspired by the vision and wisdom of 
-                    Dr. A.P.J. Abdul Kalam. Ask me anything about his thoughts on 
-                    education, science, youth, or nation-building!
+<body class="dashboard-page">
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand-row">
+                <div class="brand-icon">🧠</div>
+                <div>
+                    <h2>KalaamGPT</h2>
                 </div>
             </div>
 
-        </div>
+            <button id="tapToChatBtn" class="tap-chat-btn" type="button">Tap to Chat</button>
+            <button id="newChatBtn" class="ghost-btn new-chat-btn" type="button">+ New Chat</button>
 
-        <!-- Typing Indicator -->
-        <div class="typing-indicator" id="typingIndicator">
-            <div class="avatar">🚀</div>
-            <div class="bubble">
-                <span></span><span></span><span></span>
+            <div class="search-box">
+                <input id="conversationSearch" type="text" placeholder="🔍 Search conversations..." autocomplete="off" />
             </div>
-        </div>
 
-        <!-- Input Area -->
-        <div class="input-area">
-            <input 
-                type="text" 
-                id="userInput" 
-                placeholder="Ask Dr. Kalam anything..." 
-                autocomplete="off"
-            />
-            <button id="sendBtn" onclick="sendMessage()">Send ➤</button>
-        </div>
+            <div id="conversationList" class="conversation-list" aria-live="polite"></div>
+
+            <div class="sidebar-footer">
+                <div class="user-chip" id="userChip">Loading...</div>
+                <button id="logoutBtn" class="ghost-btn" type="button">Logout</button>
+            </div>
+        </aside>
+
+        <main class="chat-panel">
+            <header class="chat-header">
+                <div>
+                    <div class="eyebrow">Conversation Capsule</div>
+                    <h1 id="activeConversationTitle">New Conversation</h1>
+                </div>
+                <button id="renameConversationBtn" class="ghost-btn" type="button">Rename</button>
+            </header>
+
+            <div id="emptyState" class="empty-state hidden">
+                <h2>Welcome to KalaamGPT</h2>
+                <p>Ask. Learn. Imagine. Build.</p>
+                <p>Explore the vision, scientific thinking, ideas and values of Dr. A.P.J. Abdul Kalam.</p>
+                <div class="suggestion-grid">
+                    <button class="suggestion-card" type="button" data-question="What was Kalam's vision for India?">What was Kalam's vision for India?</button>
+                    <button class="suggestion-card" type="button" data-question="What did Kalam believe about failure?">What did Kalam believe about failure?</button>
+                    <button class="suggestion-card" type="button" data-question="How can youth contribute to nation building?">How can youth contribute to nation building?</button>
+                    <button class="suggestion-card" type="button" data-question="What is Kalam's PURA vision?">What is Kalam's PURA vision?</button>
+                </div>
+            </div>
+
+            <div id="chatWindow" class="chat-window" aria-live="polite"></div>
+
+            <div id="typingIndicator" class="typing-indicator hidden" aria-live="polite">
+                <div class="avatar">🚀</div>
+                <div class="bubble">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+                <span class="thinking-label">KalaamGPT is thinking...</span>
+            </div>
+
+            <div class="composer">
+                <button id="micBtn" class="mic-btn" type="button" aria-label="Use microphone">🎤</button>
+                <input id="userInput" type="text" autocomplete="off" placeholder="Ask KalaamGPT anything..." />
+                <button id="sendBtn" class="primary-btn" type="button">Send</button>
+            </div>
+        </main>
     </div>
 
     <script src="/static/script.js"></script>
