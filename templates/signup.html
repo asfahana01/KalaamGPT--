@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KalaamGPT | Sign Up</title>
+    <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="auth-page">
+    <div class="auth-card">
+        <div class="brand-wrap">
+            <div class="brand-icon">🚀</div>
+            <div>
+                <h1>KalaamGPT</h1>
+                <p>Create your account</p>
+            </div>
+        </div>
+
+        <form id="signupForm" class="auth-form">
+            <label>
+                <span>Full Name</span>
+                <input type="text" id="fullName" name="full_name" required />
+            </label>
+            <label>
+                <span>Email</span>
+                <input type="email" id="signupEmail" name="email" required />
+            </label>
+            <label>
+                <span>Password</span>
+                <input type="password" id="signupPassword" name="password" required />
+            </label>
+            <label>
+                <span>Confirm Password</span>
+                <input type="password" id="confirmPassword" name="confirm_password" required />
+            </label>
+            <button type="submit" class="primary-btn">Create Account</button>
+            <p id="signupError" class="form-message error" aria-live="polite"></p>
+        </form>
+
+        <p class="auth-link">Already have an account? <a href="/login">Log in</a></p>
+    </div>
+
+    <script>
+        const form = document.getElementById('signupForm');
+        const errorEl = document.getElementById('signupError');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            errorEl.textContent = '';
+
+            const payload = {
+                full_name: document.getElementById('fullName').value.trim(),
+                email: document.getElementById('signupEmail').value.trim(),
+                password: document.getElementById('signupPassword').value,
+                confirm_password: document.getElementById('confirmPassword').value
+            };
+
+            const response = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                errorEl.textContent = data.error || 'Signup failed.';
+                return;
+            }
+
+            window.location.href = '/';
+        });
+    </script>
+</body>
+</html>
