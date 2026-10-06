@@ -9,20 +9,20 @@ load_dotenv()
 api_key = os.getenv("GROQ_API_KEY")
 
 if not api_key:
-    raise ValueError("❌ GROQ_API_KEY not found! Check your .env file")
+    raise ValueError("GROQ_API_KEY not found! Check your .env file")
 
 # --- Setup Groq client ---
 client_groq = Groq(api_key=api_key)
 
 # --- Load embedding model ---
-print("🧠 Loading embedding model...")
+print("Loading embedding model...")
 embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
 # --- Connect to ChromaDB ---
 client = chromadb.PersistentClient(path="./chroma_db")
 collection = client.get_collection("kalam_knowledge")
 
-print("✅ KalaamGPT pipeline ready!")
+print("KalaamGPT pipeline ready!")
 
 # ============================================
 # MAIN FUNCTION
@@ -61,7 +61,7 @@ Answer as KalaamGPT:"""
 
     # Step E: Send to Groq
     response = client_groq.chat.completions.create(
-        model="llama-3.3-70b-versatile",  # free and fast
+        model=os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"),  # free and fast
         messages=[
             {"role": "user", "content": prompt}
         ]
