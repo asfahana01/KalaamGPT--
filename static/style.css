@@ -211,9 +211,13 @@ button {
     background: linear-gradient(135deg, var(--brand), var(--brand-dark));
     color: white;
     padding: 14px 16px;
-    margin-bottom: 18px;
+    margin-bottom: 12px;
     font-weight: 700;
     font-size: 1rem;
+}
+
+.new-chat-btn {
+    margin-bottom: 18px;
 }
 
 .search-box {
