@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KalaamGPT | Login</title>
+    <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="auth-page">
+    <div class="auth-card">
+        <div class="brand-wrap">
+            <div class="brand-icon">🧠</div>
+            <div>
+                <h1>KalaamGPT</h1>
+                <p>Welcome back</p>
+            </div>
+        </div>
+
+        <form id="loginForm" class="auth-form">
+            <label>
+                <span>Email</span>
+                <input type="email" id="loginEmail" name="email" required />
+            </label>
+            <label>
+                <span>Password</span>
+                <input type="password" id="loginPassword" name="password" required />
+            </label>
+            <div class="remember-row">
+                <label class="checkbox-row"><input type="checkbox" id="rememberMe" /> <span>Remember me</span></label>
+            </div>
+            <button type="submit" class="primary-btn">Login</button>
+            <p id="loginError" class="form-message error" aria-live="polite"></p>
+        </form>
+
+        <p class="auth-link">Need an account? <a href="/signup">Create one</a></p>
+    </div>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const errorEl = document.getElementById('loginError');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            errorEl.textContent = '';
+
+            const payload = {
+                email: document.getElementById('loginEmail').value.trim(),
+                password: document.getElementById('loginPassword').value,
+                remember: document.getElementById('rememberMe').checked
+            };
+
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                errorEl.textContent = data.error || 'Login failed.';
+                return;
+            }
+
+            window.location.href = '/';
+        });
+    </script>
+</body>
+</html>
