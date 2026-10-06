@@ -69,7 +69,9 @@ function renderConversationList() {
     const query = appState.searchQuery.trim().toLowerCase();
     const filtered = appState.conversations.filter((conversation) => {
         if (!query) return true;
-        return conversation.title.toLowerCase().includes(query);
+        const titleMatch = conversation.title.toLowerCase().includes(query);
+        const previewMatch = (conversation.last_message_preview || "").toLowerCase().includes(query);
+        return titleMatch || previewMatch;
     });
 
     list.innerHTML = "";
@@ -353,6 +355,9 @@ async function sendCurrentMessage() {
 function bindEvents() {
     document.getElementById("sendBtn").addEventListener("click", sendCurrentMessage);
     document.getElementById("tapToChatBtn").addEventListener("click", async () => {
+        await createConversation("New Conversation");
+    });
+    document.getElementById("newChatBtn").addEventListener("click", async () => {
         await createConversation("New Conversation");
     });
 
