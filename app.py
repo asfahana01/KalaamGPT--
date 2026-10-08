@@ -1,7 +1,11 @@
 import os
+import random
 import re
 import sqlite3
-from datetime import datetime, timezone
+import smtplib
+from datetime import datetime, timezone, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from functools import wraps
 from typing import Any
 from urllib.parse import urlparse
@@ -74,10 +78,26 @@ def ensure_db() -> None:
                 updated_at TEXT NOT NULL,
                 last_login TEXT,
                 is_active INTEGER NOT NULL DEFAULT 1,
-                role TEXT NOT NULL DEFAULT 'user'
+                role TEXT NOT NULL DEFAULT 'user',
+                email_verified INTEGER NOT NULL DEFAULT 0,
+                otp_hash TEXT,
+                otp_expires_at TEXT,
+                otp_attempts INTEGER NOT NULL DEFAULT 0
             )
             """
         )
+        
+        # Schema migration check for existing users table
+        existing_cols = {row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
+        if "email_verified" not in existing_cols:
+            conn.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 1")
+        if "otp_hash" not in existing_cols:
+            conn.execute("ALTER TABLE users ADD COLUMN otp_hash TEXT")
+        if "otp_expires_at" not in existing_cols:
+            conn.execute("ALTER TABLE users ADD COLUMN otp_expires_at TEXT")
+        if "otp_attempts" not in existing_cols:
+            conn.execute("ALTER TABLE users ADD COLUMN otp_attempts INTEGER NOT NULL DEFAULT 0")
+
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS conversations (
@@ -120,9 +140,74 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def iso_after_minutes(minutes: int = 5) -> str:
+    return (datetime.now(timezone.utc) + timedelta(minutes=minutes)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def generate_otp() -> str:
+    return f"{random.randint(0, 999999):06d}"
+
+
+def send_otp_email(to_email: str, otp_code: str) -> bool:
+    smtp_server = os.getenv("SMTP_SERVER")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_username = os.getenv("SMTP_USERNAME")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    mail_from = os.getenv("MAIL_FROM", smtp_username or "noreply@kalaamgpt.com")
+
+    subject = "Verify your KalaamGPT account"
+    html_body = f"""
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #08141f; color: #edf6ff; padding: 32px; border-radius: 16px; max-width: 520px; margin: 0 auto; border: 1px solid rgba(255, 138, 44, 0.3);">
+        <div style="text-align: center; margin-bottom: 24px;">
+            <div style="font-size: 36px; display: inline-block; background: linear-gradient(135deg, #ff8a2c, #f77700); width: 64px; height: 64px; line-height: 64px; border-radius: 16px; color: white;">🧠</div>
+            <h2 style="color: #ff8a2c; margin-top: 12px; margin-bottom: 4px; font-size: 24px;">KalaamGPT</h2>
+            <p style="color: #9bb4c5; font-size: 14px; margin: 0;">Inspired by the vision of Dr. A.P.J. Abdul Kalam</p>
+        </div>
+        
+        <div style="background: rgba(255, 255, 255, 0.04); padding: 24px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); text-align: center;">
+            <p style="font-size: 16px; margin-top: 0; color: #edf6ff;">Welcome to KalaamGPT.</p>
+            <p style="font-size: 14px; color: #9bb4c5;">Thank you for creating your account. Your verification code is:</p>
+            
+            <div style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #ff8a2c; background: #050e14; padding: 16px 24px; border-radius: 12px; border: 1px dashed #ff8a2c; margin: 20px 0; display: inline-block;">
+                {otp_code}
+            </div>
+            
+            <p style="font-size: 13px; color: #ff8a8a; margin-bottom: 0;">⚠️ This code expires in 5 minutes.</p>
+        </div>
+        
+        <p style="font-size: 12px; color: #9bb4c5; text-align: center; margin-top: 24px;">
+            If you did not create this account, you can safely ignore this email.
+        </p>
+    </div>
+    """
+
+    if not smtp_server or not smtp_username or not smtp_password:
+        print(f"\n==================================================")
+        print(f"[DEV MODE OTP] Email: {to_email} | Code: {otp_code}")
+        print(f"==================================================\n")
+        return True
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = mail_from
+        msg["To"] = to_email
+        msg.attach(MIMEText(html_body, "html"))
+
+        with smtplib.SMTP(smtp_server, smtp_port, timeout=10) as server:
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            server.sendmail(mail_from, [to_email], msg.as_string())
+        return True
+    except Exception as e:
+        print(f"[SMTP Error] Failed to send OTP email to {to_email}: {e}")
+        return False
+
+
 def serialise_user(row: sqlite3.Row | None) -> dict[str, Any] | None:
     if row is None:
         return None
+    keys = row.keys()
     return {
         "id": row["id"],
         "name": row["name"],
@@ -132,6 +217,7 @@ def serialise_user(row: sqlite3.Row | None) -> dict[str, Any] | None:
         "updated_at": row["updated_at"],
         "last_login": row["last_login"],
         "is_active": bool(row["is_active"]),
+        "email_verified": bool(row["email_verified"]) if "email_verified" in keys else True,
     }
 
 
@@ -255,22 +341,34 @@ def append_message(conversation_id: int, role: str, content: str) -> None:
 
 
 @app.route("/")
-@login_required
 def home():
+    return render_template("landing.html")
+
+
+@app.route("/chat")
+@login_required
+def chat_page():
     return render_template("index.html")
+
+
+@app.route("/verify-otp")
+def verify_otp_page():
+    if session.get("user_id"):
+        return redirect("/chat")
+    return render_template("verify_otp.html")
 
 
 @app.route("/login")
 def login_page():
     if session.get("user_id"):
-        return redirect("/")
+        return redirect("/chat")
     return render_template("login.html")
 
 
 @app.route("/signup")
 def signup_page():
     if session.get("user_id"):
-        return redirect("/")
+        return redirect("/chat")
     return render_template("signup.html")
 
 
@@ -298,22 +396,113 @@ def signup():
         return jsonify({"error": "Password must be at least 8 characters long."}), 400
 
     db = get_db()
-    existing = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+    existing = db.execute("SELECT id, email_verified FROM users WHERE email = ?", (email,)).fetchone()
+    
+    otp_code = generate_otp()
+    otp_hash = generate_password_hash(otp_code)
+    otp_expires = iso_after_minutes(5)
+    now = now_iso()
+
     if existing:
-        return jsonify({"error": "An account with this email already exists."}), 409
+        if existing["email_verified"]:
+            return jsonify({"error": "An account with this email already exists."}), 409
+        else:
+            # Update pending account with new password and OTP
+            password_hash = generate_password_hash(password)
+            db.execute(
+                """
+                UPDATE users SET name = ?, password_hash = ?, otp_hash = ?, otp_expires_at = ?, otp_attempts = 0, updated_at = ?
+                WHERE id = ?
+                """,
+                (name, password_hash, otp_hash, otp_expires, now, existing["id"]),
+            )
+            db.commit()
+            send_otp_email(email, otp_code)
+            return jsonify({"message": "Verification code sent to email.", "email": email}), 200
 
     password_hash = generate_password_hash(password)
-    now = now_iso()
-    cursor = db.execute(
-        "INSERT INTO users (name, email, password_hash, created_at, updated_at, last_login, is_active, role) VALUES (?, ?, ?, ?, ?, ?, 1, 'user')",
-        (name, email, password_hash, now, now, now),
+    db.execute(
+        """
+        INSERT INTO users (name, email, password_hash, created_at, updated_at, last_login, is_active, role, email_verified, otp_hash, otp_expires_at, otp_attempts)
+        VALUES (?, ?, ?, ?, ?, ?, 1, 'user', 0, ?, ?, 0)
+        """,
+        (name, email, password_hash, now, now, now, otp_hash, otp_expires),
     )
-    user_id = cursor.lastrowid
     db.commit()
-    session["user_id"] = user_id
-    session["user_name"] = name
-    user = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-    return jsonify({"message": "Signup successful.", "user": serialise_user(user)}), 201
+    send_otp_email(email, otp_code)
+
+    return jsonify({"message": "Account created! Please verify your email.", "email": email}), 201
+
+
+@app.route("/api/auth/verify-otp", methods=["POST"])
+def verify_otp():
+    data = request.get_json(silent=True) or {}
+    email = str(data.get("email", "")).strip().lower()
+    otp = str(data.get("otp", "")).strip()
+
+    if not email or not otp:
+        return jsonify({"error": "Email and verification code are required."}), 400
+
+    db = get_db()
+    user = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    if not user:
+        return jsonify({"error": "Account not found. Please sign up again."}), 404
+
+    if user["email_verified"]:
+        return jsonify({"message": "Email is already verified.", "email": email}), 200
+
+    if user["otp_attempts"] >= 5:
+        return jsonify({"error": "Too many verification attempts. Please request a new code."}), 429
+
+    if not user["otp_expires_at"] or now_iso() > user["otp_expires_at"]:
+        return jsonify({"error": "This verification code has expired. Please request a new code."}), 400
+
+    if not user["otp_hash"] or not check_password_hash(user["otp_hash"], otp):
+        attempts = user["otp_attempts"] + 1
+        db.execute("UPDATE users SET otp_attempts = ? WHERE id = ?", (attempts, user["id"]))
+        db.commit()
+        if attempts >= 5:
+            return jsonify({"error": "Too many verification attempts. Please request a new code."}), 429
+        return jsonify({"error": "Incorrect verification code. Please try again."}), 400
+
+    # Verification successful
+    db.execute(
+        "UPDATE users SET email_verified = 1, otp_hash = NULL, otp_expires_at = NULL, otp_attempts = 0, updated_at = ? WHERE id = ?",
+        (now_iso(), user["id"]),
+    )
+    db.commit()
+
+    return jsonify({"message": "Email verified successfully.", "email": email}), 200
+
+
+@app.route("/api/auth/resend-otp", methods=["POST"])
+def resend_otp():
+    data = request.get_json(silent=True) or {}
+    email = str(data.get("email", "")).strip().lower()
+
+    if not email:
+        return jsonify({"error": "Email is required."}), 400
+
+    db = get_db()
+    user = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    if not user:
+        return jsonify({"error": "Account not found. Please sign up again."}), 404
+
+    if user["email_verified"]:
+        return jsonify({"message": "Email is already verified."}), 200
+
+    otp_code = generate_otp()
+    otp_hash = generate_password_hash(otp_code)
+    otp_expires = iso_after_minutes(5)
+
+    db.execute(
+        "UPDATE users SET otp_hash = ?, otp_expires_at = ?, otp_attempts = 0, updated_at = ? WHERE id = ?",
+        (otp_hash, otp_expires, now_iso(), user["id"]),
+    )
+    db.commit()
+
+    send_otp_email(email, otp_code)
+    return jsonify({"message": "A new verification code has been sent to your email.", "email": email}), 200
 
 
 @app.route("/api/auth/login", methods=["POST"])
@@ -329,6 +518,13 @@ def login():
     user = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
     if not user or not check_password_hash(user["password_hash"], password):
         return jsonify({"error": "Invalid email or password."}), 401
+
+    if not user["email_verified"]:
+        return jsonify({
+            "error": "Please verify your email before logging in.",
+            "email_verified": False,
+            "email": email
+        }), 403
 
     db.execute(
         "UPDATE users SET last_login = ?, updated_at = ? WHERE id = ?",
