@@ -8,12 +8,149 @@ const appState = {
 };
 
 function escapeHtml(value) {
-    return String(value)
+    return String(value || "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
-        .replace(/\"/g, "&quot;")
+        .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+function markdownToHtml(rawText) {
+    if (!rawText) return "";
+
+    let text = rawText;
+
+    // 1. Code blocks extraction
+    const codeBlocks = [];
+    text = text.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+        const id = `___CODE_BLOCK_${codeBlocks.length}___`;
+        const escapedCode = escapeHtml(code.trim());
+        codeBlocks.push(
+            `<div class="code-block-wrap"><div class="code-header"><span>${escapeHtml(lang) || "code"}</span></div><pre><code>${escapedCode}</code></pre></div>`
+        );
+        return id;
+    });
+
+    // 2. Inline code extraction
+    const inlineCodes = [];
+    text = text.replace(/`([^`]+)`/g, (_, code) => {
+        const id = `___INLINE_CODE_${inlineCodes.length}___`;
+        inlineCodes.push(`<code>${escapeHtml(code)}</code>`);
+        return id;
+    });
+
+    // 3. Escape remaining HTML to prevent XSS
+    text = escapeHtml(text);
+
+    // 4. Tables parsing
+    const lines = text.split("\n");
+    let inTable = false;
+    let tableRows = [];
+    let processedLines = [];
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+
+        if (line.startsWith("|") && line.endsWith("|")) {
+            if (!inTable) {
+                inTable = true;
+                tableRows = [];
+            }
+            if (/^\|[\s\-:|]+\|$/.test(line)) {
+                continue; // Skip table header separator line
+            }
+            tableRows.push(line);
+        } else {
+            if (inTable) {
+                processedLines.push(renderTableHtml(tableRows));
+                inTable = false;
+                tableRows = [];
+            }
+            processedLines.push(line);
+        }
+    }
+    if (inTable) {
+        processedLines.push(renderTableHtml(tableRows));
+    }
+
+    text = processedLines.join("\n");
+
+    function renderTableHtml(rows) {
+        if (!rows.length) return "";
+        let html = '<div class="table-container"><table class="md-table"><thead><tr>';
+        const headers = rows[0].split("|").slice(1, -1);
+        for (const h of headers) {
+            html += `<th>${h.trim()}</th>`;
+        }
+        html += '</tr></thead><tbody>';
+
+        for (let r = 1; r < rows.length; r++) {
+            html += '<tr>';
+            const cells = rows[r].split("|").slice(1, -1);
+            for (const c of cells) {
+                html += `<td>${c.trim()}</td>`;
+            }
+            html += '</tr>';
+        }
+        html += '</tbody></table></div>';
+        return html;
+    }
+
+    // 5. Blockquotes
+    text = text.replace(/^&gt;\s?(.*)$/gm, "<blockquote>$1</blockquote>");
+
+    // 6. Headings
+    text = text.replace(/^####\s+(.*)$/gm, "<h4>$1</h4>");
+    text = text.replace(/^###\s+(.*)$/gm, "<h3>$1</h3>");
+    text = text.replace(/^##\s+(.*)$/gm, "<h2>$1</h2>");
+    text = text.replace(/^#\s+(.*)$/gm, "<h1>$1</h1>");
+
+    // 7. Horizontal Rules
+    text = text.replace(/^---$/gm, "<hr>");
+
+    // 8. Bold, Italic, Strikethrough
+    text = text.replace(/\*\*\*(.*?)\*\*\*/g, "<strong><em>$1</em></strong>");
+    text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    text = text.replace(/\*(.*?)\*/g, "<em>$1</em>");
+    text = text.replace(/~~(.*?)~~/g, "<del>$1</del>");
+
+    // 9. Lists
+    text = text.replace(/^[\*\-]\s+(.*)$/gm, "<li>$1</li>");
+    text = text.replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>");
+
+    text = text.replace(/^\d+\.\s+(.*)$/gm, '<li class="ol-item">$1</li>');
+    text = text.replace(/(<li class="ol-item">.*<\/li>\n?)+/g, "<ol>$&</ol>");
+
+    // 10. Paragraphs
+    const blocks = text.split(/\n\n+/);
+    text = blocks
+        .map((b) => {
+            const trimmed = b.trim();
+            if (
+                trimmed.startsWith("<h") ||
+                trimmed.startsWith("<ul") ||
+                trimmed.startsWith("<ol") ||
+                trimmed.startsWith("<blockquote") ||
+                trimmed.startsWith('<div class="table-container"') ||
+                trimmed.startsWith('<div class="code-block-wrap"') ||
+                trimmed.startsWith("<hr")
+            ) {
+                return trimmed;
+            }
+            return `<p>${trimmed.replace(/\n/g, "<br>")}</p>`;
+        })
+        .join("");
+
+    // Restore Code Blocks & Inline Code
+    codeBlocks.forEach((cb, i) => {
+        text = text.replace(`___CODE_BLOCK_${i}___`, cb);
+    });
+    inlineCodes.forEach((ic, i) => {
+        text = text.replace(`___INLINE_CODE_${i}___`, ic);
+    });
+
+    return text;
 }
 
 async function fetchJson(url, options = {}) {
@@ -114,7 +251,7 @@ function showConversationMenu(conversationId) {
     const wrapper = document.createElement("div");
     wrapper.style.position = "fixed";
     wrapper.style.inset = "0";
-    wrapper.style.background = "rgba(0,0,0,0.44)";
+    wrapper.style.background = "rgba(0,0,0,0.55)";
     wrapper.style.display = "grid";
     wrapper.style.placeItems = "center";
     wrapper.style.zIndex = "1000";
@@ -128,7 +265,7 @@ function showConversationMenu(conversationId) {
     panel.style.boxShadow = "0 15px 40px rgba(0,0,0,0.32)";
 
     const title = document.createElement("div");
-    title.textContent = "Conversation";
+    title.textContent = "Conversation Actions";
     title.style.fontWeight = "700";
     title.style.marginBottom = "14px";
 
@@ -264,6 +401,15 @@ async function openConversation(conversationId) {
     }
 }
 
+function scrollToBottom(force = false) {
+    const chatWindow = document.getElementById("chatWindow");
+    if (!chatWindow) return;
+    const isNearBottom = chatWindow.scrollHeight - chatWindow.scrollTop - chatWindow.clientHeight < 150;
+    if (force || isNearBottom) {
+        chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: "smooth" });
+    }
+}
+
 function renderMessages(messages) {
     const chatWindow = document.getElementById("chatWindow");
     chatWindow.innerHTML = "";
@@ -281,32 +427,38 @@ function renderMessages(messages) {
 
         const avatar = document.createElement("div");
         avatar.className = "message-avatar";
-        avatar.textContent = message.role === "user" ? "👤" : "🚀";
+        avatar.textContent = message.role === "user" ? "👤" : "🧠";
 
         const bubble = document.createElement("div");
-        bubble.className = "message-bubble";
-        bubble.innerHTML = markdownToHtml(message.content);
+
+        if (message.role === "user") {
+            bubble.className = "message-bubble user-bubble";
+            bubble.textContent = message.content;
+        } else {
+            bubble.className = "message-bubble assistant-card";
+            bubble.innerHTML = `
+                <div class="ai-card-header">
+                    <span class="ai-card-icon">🧠</span>
+                    <span class="ai-card-name">KalaamGPT</span>
+                </div>
+                <div class="ai-card-body">${markdownToHtml(message.content)}</div>
+                <div class="ai-card-footer">
+                    <span class="ai-badge">✦ Grounded in KalaamGPT knowledge base</span>
+                </div>
+            `;
+        }
 
         row.appendChild(avatar);
         row.appendChild(bubble);
         chatWindow.appendChild(row);
     }
 
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-}
-
-function markdownToHtml(text) {
-    const escaped = escapeHtml(text || "");
-    const withParagraphs = escaped
-        .replace(/\n\n+/g, "</p><p>")
-        .replace(/\n/g, "<br>");
-    return `<p>${withParagraphs}</p>`;
+    scrollToBottom(true);
 }
 
 function showTyping() {
     document.getElementById("typingIndicator").classList.remove("hidden");
-    const chatWindow = document.getElementById("chatWindow");
-    chatWindow.scrollTop = chatWindow.scrollHeight;
+    scrollToBottom(true);
 }
 
 function hideTyping() {
@@ -324,6 +476,20 @@ async function sendCurrentMessage() {
 
     const currentConversationId = appState.activeConversationId;
     input.value = "";
+
+    // Append user message immediately to UI
+    const chatWindow = document.getElementById("chatWindow");
+    hideEmptyState();
+
+    const userRow = document.createElement("div");
+    userRow.className = "message-row user";
+    userRow.innerHTML = `
+        <div class="message-avatar">👤</div>
+        <div class="message-bubble user-bubble">${escapeHtml(message)}</div>
+    `;
+    chatWindow.appendChild(userRow);
+    scrollToBottom(true);
+
     showTyping();
 
     try {
@@ -440,7 +606,7 @@ function toggleSpeechRecognition() {
         appState.isListening = false;
         micButton.classList.remove("listening");
         micButton.textContent = "🎤";
-        alert("Speech recognition could not be started. Please check your microphone permissions.");
+        alert("Speech recognition error or mic permission denied.");
     };
 
     recognition.onend = () => {
