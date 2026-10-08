@@ -67,7 +67,8 @@
                 return;
             }
 
-            window.location.href = '/';
+            sessionStorage.setItem('pending_email', payload.email);
+            window.location.href = '/verify-otp?email=' + encodeURIComponent(payload.email);
         });
     </script>
 </body>
