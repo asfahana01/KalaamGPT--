@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KalaamGPT | Verify Email</title>
+    <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="auth-page">
+    <div class="auth-card otp-card">
+        <div class="brand-wrap">
+            <div class="brand-icon">🧠</div>
+            <div>
+                <h1>Verify Your Email</h1>
+                <p>We've sent a 6-digit verification code to</p>
+                <div id="targetEmail" class="target-email">...</div>
+            </div>
+        </div>
+
+        <form id="otpForm" class="auth-form">
+            <div class="otp-inputs-row" id="otpContainer">
+                <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" class="otp-box" autocomplete="one-time-code" autofocus />
+                <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" class="otp-box" autocomplete="one-time-code" />
+                <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" class="otp-box" autocomplete="one-time-code" />
+                <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" class="otp-box" autocomplete="one-time-code" />
+                <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" class="otp-box" autocomplete="one-time-code" />
+                <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" class="otp-box" autocomplete="one-time-code" />
+            </div>
+
+            <button type="submit" id="verifyBtn" class="primary-btn">Verify Email</button>
+
+            <div class="otp-timer-wrap">
+                <span>Code expires in: </span>
+                <strong id="timerCountdown">05:00</strong>
+            </div>
+
+            <p id="otpMessage" class="form-message" aria-live="polite"></p>
+
+            <div class="resend-row">
+                <span>Didn't receive the code?</span>
+                <button type="button" id="resendBtn" class="ghost-btn resend-btn">Resend OTP</button>
+            </div>
+        </form>
+
+        <p class="auth-link"><a href="/login">← Back to Login</a></p>
+    </div>
+
+    <script src="/static/otp.js"></script>
+</body>
+</html>
