@@ -170,6 +170,23 @@ Open your browser at: **http://localhost:5000** 🚀
 
 ---
 
+🎭 Talking Avatar
+
+The `/avatar` page continues to use KALAM-GPT's authenticated RAG chat endpoint and conversation history. For spoken replies, D-ID's photo-avatar API generates a video with a synthetic Microsoft Indian-English voice. The generated video contains both the audio and the facial animation, so playback, pause, resume, and replay stay synchronized. This is provider-generated audio-driven animation, not phoneme/viseme timestamp synchronization.
+
+To enable it:
+
+1. Create a D-ID API key in [D-ID Studio](https://studio.d-id.com/account-settings). Store it in `.env` as `DID_API_KEY=API_USER:API_PASSWORD`; do not put it in frontend code or commit it.
+2. Host a `.jpg` or `.png` portrait at a publicly reachable HTTPS URL and set `DID_SOURCE_URL` to that URL. Use only an image you have permission to send to D-ID and permission to animate. The existing local portrait remains the idle image; the configured remote image is sent to D-ID for each generated talk. D-ID may reject images it recognizes as public figures, so generation depends on provider moderation and image rights.
+3. Review D-ID's current terms, privacy policy, and pricing/credits before enabling the integration. The generated response text and portrait are sent to D-ID; provider processing can incur charges. Microphone transcription uses the browser's speech-recognition service.
+4. Restart Flask, sign in, open **Meet AI Avatar**, and send a text question or use the microphone. The microphone requires browser speech-recognition support and permission. The first response can take tens of seconds while D-ID renders the video.
+
+For optional natural blinking and head movement while idle/listening, generate a silent D-ID clip once using the same portrait and voice, then host the completed MP4 at a stable HTTPS URL and set `DID_IDLE_VIDEO_URL`. D-ID's [Microsoft TTS guide](https://docs.d-id.com/docs/tts-microsoft) documents the silent-clip recipe using `driver_url: "bank://lively/driver-06"`, `config.fluent: true`, and three 5-second SSML breaks. The idle clip loops muted and is paused while KALAM-GPT prepares/speaks. A D-ID result URL expires after 24 hours, so host a copy yourself if you want the idle animation to persist; this setup is optional and avoids new idle renders per visit.
+
+`DID_API_KEY` and `DID_SOURCE_URL` are optional for the rest of KALAM-GPT; without them, avatar video generation reports a setup error while the normal dashboard chat remains available. Replies use a synthetic Indian-English neural voice, not a Dr. Kalam recording or voice clone. The avatar is an AI-generated representation inspired by Dr. A.P.J. Abdul Kalam, not Dr. Kalam himself. D-ID's generated talking clip synchronizes its mouth to its own audio, but does not return phoneme/viseme timing metadata. If no idle clip is configured, the still portrait is used between turns. Interrupting playback stops the browser's video and polling; a render already submitted to D-ID may continue processing and count toward provider usage.
+
+---
+
 💬 Example Conversations
 
 **Q: What is Dr. Kalam's vision for Indian youth?**
