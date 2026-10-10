@@ -11,10 +11,13 @@ from typing import Any
 from urllib.parse import urlparse
 
 from flask import Flask, g, jsonify, redirect, render_template, request, session
+from itsdangerous import BadSignature, URLSafeTimedSerializer
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from dotenv import load_dotenv
 from rag_pipeline import ask_kalam
+from services.did_avatar import DidAvatarError, create_talk, get_talk
+from services.text_to_speech import clean_text_for_speech
 
 load_dotenv()
 
@@ -349,6 +352,15 @@ def home():
 @login_required
 def chat_page():
     return render_template("index.html")
+
+
+@app.route("/avatar")
+@login_required
+def avatar_page():
+    return render_template(
+        "avatar.html",
+        idle_video_url=os.getenv("DID_IDLE_VIDEO_URL", "").strip(),
+    )
 
 
 @app.route("/verify-otp")
@@ -686,12 +698,169 @@ def chat():
     })
 
 
+@app.route("/api/avatar/chat", methods=["POST"])
+@api_login_required
+def avatar_chat():
+    data = request.get_json(silent=True) or {}
+    user_message = str(data.get("message", "")).strip()
+    conversation_id = data.get("conversation_id")
+
+    if not user_message:
+        return jsonify({"error": "Message transcript cannot be empty."}), 400
+
+    db = get_db()
+    if conversation_id:
+        conversation = require_user_ownership(int(conversation_id))
+        if conversation is None:
+            return jsonify({"error": "Conversation not found."}), 404
+        active_id = int(conversation_id)
+    else:
+        title = f"Avatar: {generate_title_from_message(user_message)}"
+        active_id = db.execute(
+            "INSERT INTO conversations (user_id, title, created_at, updated_at, last_message_preview, message_count) VALUES (?, ?, ?, ?, ?, 0)",
+            (session["user_id"], title, now_iso(), now_iso(), ""),
+        ).lastrowid
+        db.commit()
+        conversation = db.execute("SELECT * FROM conversations WHERE id = ?", (active_id,)).fetchone()
+
+    append_message(active_id, "user", user_message)
+    ai_response = ask_kalam(user_message)
+    spoken_text = clean_text_for_speech(ai_response)
+    append_message(active_id, "assistant", ai_response)
+
+    db.commit()
+    updated = db.execute("SELECT * FROM conversations WHERE id = ?", (active_id,)).fetchone()
+    return jsonify({
+        "response": ai_response,
+        "spoken_text": spoken_text,
+        "conversation_id": active_id,
+        "conversation": serialise_conversation(updated),
+    })
+
+
+def avatar_token_serializer() -> URLSafeTimedSerializer:
+    return URLSafeTimedSerializer(app.config["SECRET_KEY"], salt="kalamgpt-avatar")
+
+
+@app.route("/api/avatar/talks", methods=["POST"])
+@api_login_required
+def create_avatar_talk():
+    data = request.get_json(silent=True) or {}
+    text = str(data.get("text", "")).strip()
+    voice_id = data.get("voice_id")
+    allowed_voices = {"en-IN-PrabhatNeural", "en-IN-NeerjaNeural"}
+
+    if not text:
+        return jsonify({"error": "There is no response text to speak."}), 400
+    if len(text) > 5000:
+        return jsonify({"error": "Avatar responses must be 5,000 characters or fewer."}), 400
+    if not isinstance(voice_id, str) or voice_id not in allowed_voices:
+        return jsonify({"error": "Select a supported synthetic Indian-English voice."}), 400
+
+    try:
+        rate = float(data.get("rate", 0.9))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Speaking speed must be a number between 0.7 and 1.2."}), 400
+    if isinstance(data.get("rate"), bool) or not 0.7 <= rate <= 1.2:
+        return jsonify({"error": "Speaking speed must be between 0.7 and 1.2."}), 400
+
+    if app.config["SECRET_KEY"] == "dev-secret-key-change-me":
+        return jsonify({"error": "Set a unique FLASK_SECRET_KEY before using the talking-avatar service."}), 503
+
+    api_key = os.getenv("DID_API_KEY", "").strip()
+    if not api_key or ":" not in api_key:
+        return jsonify({"error": "Talking-avatar service is not configured. Set DID_API_KEY."}), 503
+
+    source_url = os.getenv("DID_SOURCE_URL", "").strip()
+    parsed_source_url = urlparse(source_url)
+    if parsed_source_url.scheme != "https" or not parsed_source_url.netloc:
+        return jsonify({
+            "error": "Talking-avatar service requires DID_SOURCE_URL to be a public HTTPS image URL."
+        }), 503
+
+    try:
+        talk = create_talk(api_key, source_url, text, voice_id, rate)
+    except DidAvatarError as error:
+        app.logger.warning(
+            "D-ID talk creation failed: status=%s category=%s provider_kind=%s",
+            error.status_code,
+            error.category,
+            error.provider_kind,
+        )
+        status_code = error.status_code if error.status_code == 402 else 502
+        return jsonify({"error": str(error), "code": error.category}), status_code
+
+    talk_id = talk.get("id")
+    if not isinstance(talk_id, str) or not talk_id:
+        app.logger.error("D-ID talk creation response did not contain a talk ID.")
+        return jsonify({"error": "Avatar provider returned an invalid response."}), 502
+
+    talk_token = avatar_token_serializer().dumps({
+        "purpose": "avatar-talk",
+        "talk_id": talk_id,
+        "user_id": session["user_id"],
+    })
+    return jsonify({"talk_token": talk_token, "status": talk.get("status", "created")}), 202
+
+
+@app.route("/api/avatar/talks/<token>", methods=["GET"])
+@api_login_required
+def get_avatar_talk(token: str):
+    if app.config["SECRET_KEY"] == "dev-secret-key-change-me":
+        return jsonify({"error": "Set a unique FLASK_SECRET_KEY before using the talking-avatar service."}), 503
+
+    try:
+        claims = avatar_token_serializer().loads(token, max_age=3600)
+    except BadSignature:
+        return jsonify({"error": "Avatar video request is invalid or expired."}), 404
+
+    if (
+        not isinstance(claims, dict)
+        or claims.get("purpose") != "avatar-talk"
+        or claims.get("user_id") != session.get("user_id")
+        or not isinstance(claims.get("talk_id"), str)
+    ):
+        return jsonify({"error": "Avatar video request is invalid or expired."}), 404
+
+    try:
+        talk = get_talk(os.getenv("DID_API_KEY", "").strip(), claims["talk_id"])
+    except DidAvatarError as error:
+        app.logger.warning(
+            "D-ID talk status request failed: status=%s category=%s provider_kind=%s",
+            error.status_code,
+            error.category,
+            error.provider_kind,
+        )
+        status_code = error.status_code if error.status_code == 402 else 502
+        return jsonify({"error": str(error), "code": error.category}), status_code
+
+    status = talk.get("status")
+    if not isinstance(status, str):
+        app.logger.error("D-ID talk status response did not contain a valid status.")
+        return jsonify({"error": "Avatar provider returned an invalid response."}), 502
+    if status in {"error", "rejected"}:
+        return jsonify({"status": "error", "error": "Avatar provider could not render this response."})
+
+    result_url = talk.get("result_url")
+    if status == "done":
+        if not isinstance(result_url, str):
+            app.logger.error("D-ID completed talk did not contain a valid HTTPS video URL.")
+            return jsonify({"error": "Avatar provider returned an invalid video URL."}), 502
+        parsed_result_url = urlparse(result_url)
+        if parsed_result_url.scheme != "https" or not parsed_result_url.netloc:
+            app.logger.error("D-ID completed talk did not contain a valid HTTPS video URL.")
+            return jsonify({"error": "Avatar provider returned an invalid video URL."}), 502
+        return jsonify({"status": "done", "video_url": result_url})
+
+    return jsonify({"status": status or "created"})
+
+
 @app.route("/api/health")
 def health():
     return jsonify({"status": "ok"})
 
 
 if __name__ == "__main__":
-    print("🚀 Starting KalaamGPT server...")
-    print(f"📡 Open your browser at: http://localhost:5000")
+    print("Starting KalaamGPT server...")
+    print("Open your browser at: http://localhost:5000")
     app.run(debug=True, host="0.0.0.0", port=5000)
