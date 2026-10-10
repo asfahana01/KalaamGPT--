@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>KALAM-GPT | AI Avatar</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="stylesheet" href="/static/avatar.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="avatar-page-body">
+    <div class="avatar-viewport">
+
+        <!-- TOP BAR NAVIGATION -->
+        <header class="avatar-topbar">
+            <div class="topbar-left">
+                <a href="/chat" class="exit-btn" id="exitAvatarBtn" title="Return to Dashboard">
+                    <span class="exit-icon">←</span>
+                    <span class="exit-text">Dashboard</span>
+                </a>
+                <div class="brand-badge">
+                    <span class="brand-icon">🧠</span>
+                    <div class="brand-info">
+                        <span class="brand-name">KALAM-GPT</span>
+                        <span class="brand-sub">AI Avatar Experience</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <div class="audio-settings-dropdown">
+                    <button class="icon-btn" id="settingsToggleBtn" title="Voice & Sound Settings" type="button">
+                        ⚙️ <span class="btn-label">Settings</span>
+                    </button>
+                    <div class="settings-popover hidden" id="settingsPopover">
+                        <h4>Voice & Audio Settings</h4>
+                        <div class="setting-item">
+                            <label for="voiceSelect">Synthetic Indian-English voice:</label>
+                            <select id="voiceSelect" class="setting-select">
+                                <option value="en-IN-PrabhatNeural">Prabhat · masculine</option>
+                                <option value="en-IN-NeerjaNeural">Neerja · feminine</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label for="speechRate">Speaking Speed: <span id="rateVal">0.9x</span></label>
+                            <input type="range" id="speechRate" min="0.7" max="1.2" step="0.05" value="0.9" />
+                        </div>
+                        <p class="voice-note">Synthetic Microsoft neural voices. This is not an authentic recording or voice clone.</p>
+                    </div>
+                </div>
+                <button class="icon-btn" id="transcriptToggleBtn" type="button" title="Toggle Live Transcript">
+                    💬 <span class="btn-label">Transcript</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- AVATAR AND RESPONSE PANELS -->
+        <main class="avatar-stage">
+            <div class="ambient-glow" id="ambientGlow"></div>
+
+            <section class="avatar-column" aria-label="AI avatar and playback controls">
+                <div class="avatar-wrapper" id="avatarWrapper">
+                    <div class="avatar-ring-container">
+                        <div class="avatar-pulse-ring ring-1"></div>
+                        <div class="avatar-pulse-ring ring-2"></div>
+                        <div class="avatar-pulse-ring ring-3"></div>
+                    </div>
+
+                    <div class="avatar-portrait-frame" id="avatarFrame">
+                        <img src="/static/images/avatar_kalam.jpeg" alt="AI-generated representation inspired by Dr. A.P.J. Abdul Kalam" id="avatarImg" class="avatar-image" />
+                        <video id="avatarIdleVideo" class="avatar-video" playsinline preload="none" loop muted hidden poster="/static/images/avatar_kalam.jpeg" data-idle-video-url="{{ idle_video_url }}"></video>
+                        <video id="avatarVideo" class="avatar-video" playsinline preload="none" hidden aria-label="AI-generated talking avatar video"></video>
+                    </div>
+
+                    <div class="avatar-disclaimer">
+                        <span>AI-generated representation inspired by Dr. A.P.J. Abdul Kalam; not Dr. Kalam himself. D-ID receives the response text and configured portrait; browser speech recognition handles microphone input.</span>
+                    </div>
+                </div>
+
+                <div class="status-chip avatar-status" id="avatarStatusChip">
+                    <span class="status-dot idle"></span>
+                    <span class="status-text" id="statusText" aria-live="polite">Ready to talk</span>
+                </div>
+            </section>
+
+            <section class="response-panel" aria-labelledby="responseHeading">
+                <header class="response-header">
+                    <div>
+                        <span class="response-eyebrow">KALAM-GPT</span>
+                        <h1 id="responseHeading">Conversation response</h1>
+                    </div>
+                    <span class="response-state" id="responseState" aria-live="polite">Ready for your question</span>
+                </header>
+                <div class="response-content" id="responseContent" tabindex="0" aria-label="Latest KALAM-GPT response">
+                    <p class="response-placeholder" id="responsePlaceholder">Ask a question by typing below or using the microphone. Your full response will appear here.</p>
+                    <div class="response-copy" id="responseText" hidden></div>
+                </div>
+                <div class="subtitle-overlay hidden" id="subtitleOverlay" role="status">
+                    <div class="subtitle-box" id="subtitleBox"></div>
+                </div>
+            </section>
+
+            <!-- LIVE TRANSCRIPT PANEL (Collapsible) -->
+            <aside class="transcript-panel hidden" id="transcriptPanel">
+                <div class="transcript-header">
+                    <h3>Conversation Transcript</h3>
+                    <button class="close-panel-btn" id="closeTranscriptBtn" type="button">✕</button>
+                </div>
+                <div class="transcript-body" id="transcriptBody">
+                    <div class="transcript-empty" id="transcriptEmpty">
+                        <p>Type or speak to KALAM-GPT. Replies are generated by its existing knowledge-grounded assistant.</p>
+                    </div>
+                </div>
+            </aside>
+
+        </main>
+
+        <!-- BOTTOM CONTROLS BAR -->
+        <footer class="avatar-controls">
+            <form class="avatar-text-form" id="avatarTextForm">
+                <label class="visually-hidden" for="avatarTextInput">Type a message for KALAM-GPT</label>
+                <input id="avatarTextInput" type="text" maxlength="5000" autocomplete="off" placeholder="Ask KALAM-GPT a question..." />
+                <button class="avatar-text-send" id="avatarTextSendBtn" type="submit">Send</button>
+            </form>
+            <div class="controls-inner">
+
+                <!-- Left control item -->
+                <button class="ctrl-btn secondary" id="muteAudioBtn" type="button" title="Mute/Unmute Audio">
+                    <span class="ctrl-icon" id="muteIcon">🔊</span>
+                    <span class="ctrl-text" id="muteText">Sound On</span>
+                </button>
+
+                <!-- Center Microphone CTA -->
+                <div class="mic-cta-wrap">
+                    <button class="mic-main-btn" id="avatarMicBtn" type="button" aria-label="Toggle Microphone Listening">
+                        <div class="mic-icon-inner" id="micIconInner">🎙️</div>
+                        <div class="mic-ripple"></div>
+                    </button>
+                    <span class="mic-hint" id="micHint">Tap to Speak</span>
+                </div>
+
+                <!-- Right control items -->
+                <div class="right-ctrls">
+                    <button class="ctrl-btn secondary" id="playPauseBtn" type="button" title="Pause or resume the avatar" disabled>
+                        <span class="ctrl-icon" id="playPauseIcon">▶</span>
+                        <span class="ctrl-text" id="playPauseText">Play</span>
+                    </button>
+                    <button class="ctrl-btn secondary" id="replayBtn" type="button" title="Replay Last Answer" disabled>
+                        <span class="ctrl-icon">🔄</span>
+                        <span class="ctrl-text">Replay</span>
+                    </button>
+                    <button class="ctrl-btn danger" id="endSessionBtn" type="button" title="End Conversation">
+                        <span class="ctrl-icon">🚪</span>
+                        <span class="ctrl-text">End Call</span>
+                    </button>
+                </div>
+
+            </div>
+        </footer>
+
+    </div>
+
+    <script src="/static/avatar.js"></script>
+</body>
+</html>
