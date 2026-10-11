@@ -27,22 +27,25 @@ print("KalaamGPT pipeline ready!")
 # ============================================
 # MAIN FUNCTION
 # ============================================
-def ask_kalam(user_question):
-
-    # Step A: Convert question to embedding
+def _retrieve_context(user_question):
     question_embedding = embedder.encode(user_question).tolist()
-
-    # Step B: Search ChromaDB for top 3 relevant chunks
     results = collection.query(
         query_embeddings=[question_embedding],
         n_results=3
     )
+    return "\n\n---\n\n".join(results["documents"][0])
 
-    # Step C: Extract relevant chunks
-    relevant_chunks = results["documents"][0]
-    context = "\n\n---\n\n".join(relevant_chunks)
 
-    # Step D: Build prompt
+def _generate_answer(messages):
+    response = client_groq.chat.completions.create(
+        model=os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"),
+        messages=messages
+    )
+    return response.choices[0].message.content
+
+
+def ask_kalam(user_question):
+    context = _retrieve_context(user_question)
     prompt = f"""You are KalaamGPT, an intelligent conversational AI inspired by 
 Dr. A.P.J. Abdul Kalam — scientist, President of India, and visionary leader.
 
@@ -59,15 +62,23 @@ User's Question: {user_question}
 
 Answer as KalaamGPT:"""
 
-    # Step E: Send to Groq
-    response = client_groq.chat.completions.create(
-        model=os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"),  # free and fast
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
-    )
+    return _generate_answer([{"role": "user", "content": prompt}])
 
-    return response.choices[0].message.content
+
+def ask_kalam_avatar(user_question, conversation_history=None):
+    context = _retrieve_context(user_question)
+    system_prompt = f"""You are KALAM-GPT, an intelligent conversational AI inspired by Dr. A.P.J. Abdul Kalam.
+
+Ground factual answers in the retrieved context and the conversation. Be honest when the answer is not supported; do not invent facts or quotations.
+For the Avatar's spoken conversation, answer naturally and concisely: usually one short sentence for greetings or casual conversation, and 1–3 short sentences (about 15–50 words) for ordinary questions. For complex questions, summarize the essential information briefly. Avoid unnecessary introductions, repeated information, and long lists. If the user explicitly requests detail, provide a reasonably concise detailed answer. Do not omit essential safety information to shorten an answer.
+Use plain spoken prose without markdown, headings, or bullet lists. Use conversation history to resolve references and maintain continuity.
+
+Retrieved context from Dr. Kalam's books and speeches:
+{context}"""
+    messages = [{"role": "system", "content": system_prompt}]
+    messages.extend(conversation_history or [])
+    messages.append({"role": "user", "content": user_question})
+    return _generate_answer(messages)
 
 
 # ============================================

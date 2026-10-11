@@ -37,17 +37,17 @@
                     <div class="settings-popover hidden" id="settingsPopover">
                         <h4>Voice & Audio Settings</h4>
                         <div class="setting-item">
-                            <label for="voiceSelect">Synthetic Indian-English voice:</label>
+                            <label for="voiceSelect">Preferred browser voice:</label>
                             <select id="voiceSelect" class="setting-select">
-                                <option value="en-IN-PrabhatNeural">Prabhat · masculine</option>
-                                <option value="en-IN-NeerjaNeural">Neerja · feminine</option>
+                                <option value="en-IN-PrabhatNeural">Masculine, if available</option>
+                                <option value="en-IN-NeerjaNeural">Feminine, if available</option>
                             </select>
                         </div>
                         <div class="setting-item">
                             <label for="speechRate">Speaking Speed: <span id="rateVal">0.9x</span></label>
                             <input type="range" id="speechRate" min="0.7" max="1.2" step="0.05" value="0.9" />
                         </div>
-                        <p class="voice-note">Synthetic Microsoft neural voices. This is not an authentic recording or voice clone.</p>
+                        <p class="voice-note">Available voices depend on your browser and device. This is not an authentic recording or voice clone.</p>
                     </div>
                 </div>
                 <button class="icon-btn" id="transcriptToggleBtn" type="button" title="Toggle Live Transcript">
@@ -70,12 +70,11 @@
 
                     <div class="avatar-portrait-frame" id="avatarFrame">
                         <img src="/static/images/avatar_kalam.jpeg" alt="AI-generated representation inspired by Dr. A.P.J. Abdul Kalam" id="avatarImg" class="avatar-image" />
-                        <video id="avatarIdleVideo" class="avatar-video" playsinline preload="none" loop muted hidden poster="/static/images/avatar_kalam.jpeg" data-idle-video-url="{{ idle_video_url }}"></video>
-                        <video id="avatarVideo" class="avatar-video" playsinline preload="none" hidden aria-label="AI-generated talking avatar video"></video>
+                        <video id="avatarVideo" class="avatar-video" src="/static/images/avatar_video.mp4" playsinline preload="auto" loop muted hidden poster="/static/images/avatar_kalam.jpeg" aria-label="Prerecorded avatar video"></video>
                     </div>
 
                     <div class="avatar-disclaimer">
-                        <span>AI-generated representation inspired by Dr. A.P.J. Abdul Kalam; not Dr. Kalam himself. D-ID receives the response text and configured portrait; browser speech recognition handles microphone input.</span>
+                        <span>AI-generated representation inspired by Dr. A.P.J. Abdul Kalam; not Dr. Kalam himself. The prerecorded video is not lip-synchronized with generated speech.</span>
                     </div>
                 </div>
 

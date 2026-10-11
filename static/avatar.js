@@ -15,7 +15,6 @@
         statusText: document.getElementById("statusText"),
         avatarWrapper: document.getElementById("avatarWrapper"),
         avatarImg: document.getElementById("avatarImg"),
-        avatarIdleVideo: document.getElementById("avatarIdleVideo"),
         avatarVideo: document.getElementById("avatarVideo"),
         ambientGlow: document.getElementById("ambientGlow"),
         avatarMicBtn: document.getElementById("avatarMicBtn"),
@@ -54,20 +53,19 @@
     let activeConversationId = null;
     let activeTurnId = 0;
     let requestController = null;
-    let lastVideoUrl = "";
-    let idleAnimationFailed = false;
+    let playbackRunId = 0;
+    let lastResponseText = "";
+    let visibleCharacterCount = 0;
+    let activeVideoTurnId = 0;
+    let failedVideoTurnId = 0;
     let isMuted = false;
     let recognition = null;
     let isUserListening = false;
     let recognizedText = "";
+    const speechSynthesis = window.speechSynthesis;
 
     function setState(state, message) {
         currentState = state;
-        if (state === STATES.IDLE || state === STATES.LISTENING) {
-            startIdleAnimation();
-        } else {
-            stopIdleAnimation();
-        }
         elements.avatarWrapper.classList.remove("listening", "speaking", "processing");
         elements.ambientGlow.classList.remove("listening", "speaking");
         elements.avatarMicBtn.classList.remove("listening", "speaking");
@@ -117,13 +115,12 @@
     }
 
     function updatePlaybackButtons() {
-        const hasVideo = Boolean(lastVideoUrl);
-        const hasCurrentClip = Boolean(elements.avatarVideo.currentSrc);
-        const isPaused = currentState === STATES.PAUSED ||
-            (elements.avatarVideo.paused && !elements.avatarVideo.ended && hasCurrentClip);
-        elements.playPauseBtn.disabled = !hasVideo;
-        elements.replayBtn.disabled = !hasVideo;
-        const action = isPaused ? "Resume" : hasCurrentClip ? "Pause" : "Play";
+        const hasResponse = Boolean(lastResponseText);
+        const action = currentState === STATES.PAUSED
+            ? "Resume"
+            : currentState === STATES.SPEAKING ? "Pause" : "Play";
+        elements.playPauseBtn.disabled = !hasResponse;
+        elements.replayBtn.disabled = !hasResponse;
         elements.playPauseIcon.textContent = action === "Pause" ? "⏸" : "▶";
         elements.playPauseText.textContent = action;
         elements.playPauseBtn.title = `${action} avatar playback`;
@@ -135,10 +132,13 @@
     }
 
     function showResponse(text) {
+        const isFirstReveal = elements.responseText.hidden;
         elements.responseText.textContent = text;
         elements.responsePlaceholder.hidden = true;
         elements.responseText.hidden = false;
-        elements.responseContent.scrollTop = 0;
+        elements.responseContent.scrollTop = isFirstReveal
+            ? 0
+            : elements.responseContent.scrollHeight;
     }
 
     function hideSubtitle() {
@@ -166,61 +166,22 @@
 
     function clearVideo() {
         elements.avatarVideo.pause();
-        elements.avatarVideo.removeAttribute("src");
-        elements.avatarVideo.load();
+        try {
+            elements.avatarVideo.currentTime = 0;
+        } catch (error) {
+            console.debug("Avatar video is not ready to reset.", error);
+        }
         elements.avatarVideo.hidden = true;
         elements.avatarImg.hidden = false;
-        stopIdleAnimation();
         updatePlaybackButtons();
-    }
-
-    function stopIdleAnimation() {
-        elements.avatarIdleVideo.pause();
-        elements.avatarIdleVideo.hidden = true;
-        if (elements.avatarVideo.hidden) {
-            elements.avatarImg.hidden = false;
-        }
-    }
-
-    function handleIdleAnimationError(error) {
-        idleAnimationFailed = true;
-        stopIdleAnimation();
-        console.error("Idle avatar video failed.", error);
-        if (currentState === STATES.IDLE || currentState === STATES.LISTENING) {
-            elements.statusText.textContent = "Idle animation unavailable; showing portrait.";
-        }
-    }
-
-    function startIdleAnimation() {
-        const videoUrl = elements.avatarIdleVideo.dataset.idleVideoUrl.trim();
-        if (!videoUrl || idleAnimationFailed) return;
-
-        try {
-            const parsedUrl = new URL(videoUrl, window.location.href);
-            if (parsedUrl.protocol !== "https:") {
-                throw new Error("Idle avatar video must use HTTPS.");
-            }
-
-            if (!elements.avatarIdleVideo.currentSrc) {
-                elements.avatarIdleVideo.src = parsedUrl.href;
-                elements.avatarIdleVideo.load();
-            }
-            elements.avatarVideo.hidden = true;
-            elements.avatarImg.hidden = true;
-            elements.avatarIdleVideo.hidden = false;
-            if (elements.avatarIdleVideo.paused) {
-                elements.avatarIdleVideo.play().catch(function (error) {
-                    handleIdleAnimationError(error);
-                });
-            }
-        } catch (error) {
-            handleIdleAnimationError(error);
-        }
     }
 
     function cancelActiveTurn() {
         activeTurnId += 1;
+        playbackRunId += 1;
         elements.avatarTextSendBtn.disabled = false;
+        if (speechSynthesis) speechSynthesis.cancel();
+        clearVideo();
         if (requestController) {
             requestController.abort();
             requestController = null;
@@ -233,7 +194,7 @@
                 console.debug("Speech recognition was already stopped.", error);
             }
         }
-        clearVideo();
+        setState(STATES.IDLE, "Ready to talk");
         return activeTurnId;
     }
 
@@ -254,92 +215,157 @@
         return data;
     }
 
-    function wait(milliseconds, signal) {
-        return new Promise(function (resolve, reject) {
-            function cleanup() {
-                clearTimeout(timer);
-                signal.removeEventListener("abort", onAbort);
-            }
-            function onAbort() {
-                cleanup();
-                reject(new DOMException("Request was cancelled.", "AbortError"));
-            }
-            const timer = setTimeout(function () {
-                cleanup();
-                resolve();
-            }, milliseconds);
-
-            if (signal.aborted) {
-                onAbort();
-            } else {
-                signal.addEventListener("abort", onAbort, { once: true });
-            }
+    function splitSpeechChunks(text, startOffset) {
+        const matches = text.match(/[^.!?]+[.!?]+(?:["'’”)]*)\s*|[^.!?]+$/g);
+        const chunks = matches && matches.length ? matches : [text];
+        let offset = startOffset;
+        return chunks.map(function (chunk) {
+            const result = { text: chunk, start: offset };
+            offset += chunk.length;
+            return result;
         });
     }
 
-    async function generateAvatarVideo(text, signal) {
-        const creation = await fetchJson("/api/avatar/talks", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                text: text,
-                voice_id: elements.voiceSelect.value,
-                rate: Number(elements.speechRate.value)
-            }),
-            signal: signal
-        });
-        if (typeof creation.talk_token !== "string" || !creation.talk_token) {
-            throw new Error("Avatar provider returned an invalid video request.");
-        }
-
-        const deadline = Date.now() + 120000;
-        while (Date.now() < deadline) {
-            await wait(1800, signal);
-            const result = await fetchJson(`/api/avatar/talks/${encodeURIComponent(creation.talk_token)}`, {
-                method: "GET",
-                signal: signal
-            });
-            if (result.status === "done") {
-                return result.video_url;
-            }
-            if (result.status === "error") {
-                throw new Error(result.error || "Avatar video generation failed.");
-            }
-            setState(STATES.PROCESSING, "Rendering the synchronized avatar...");
-        }
-        throw new Error("Avatar video generation took too long. Please try again.");
-    }
-
-    async function playVideo(url) {
-        const parsedUrl = new URL(url, window.location.href);
-        if (parsedUrl.protocol !== "https:") {
-            throw new Error("The avatar provider returned an insecure video link.");
-        }
-
-        lastVideoUrl = parsedUrl.href;
+    function showAvatarVideo(turnId) {
+        if (turnId !== activeTurnId || failedVideoTurnId === turnId) return;
+        activeVideoTurnId = turnId;
         elements.avatarImg.hidden = true;
         elements.avatarVideo.hidden = false;
-        elements.avatarVideo.src = lastVideoUrl;
-        elements.avatarVideo.muted = isMuted;
-        elements.avatarVideo.load();
-        updatePlaybackButtons();
-
+        elements.avatarVideo.muted = true;
+        elements.avatarVideo.loop = true;
         try {
-            await elements.avatarVideo.play();
+            const playback = elements.avatarVideo.play();
+            if (playback && typeof playback.catch === "function") {
+                playback.catch(function (error) {
+                    handleVideoFailure(turnId, error);
+                });
+            }
         } catch (error) {
-            if (error.name === "NotAllowedError") {
-                setState(STATES.PAUSED, "Avatar ready. Press Play to start.");
+            handleVideoFailure(turnId, error);
+        }
+    }
+
+    function handleVideoFailure(turnId, error) {
+        if (turnId !== activeTurnId || failedVideoTurnId === turnId) return;
+        failedVideoTurnId = turnId;
+        console.error("Avatar video playback failed; continuing with speech.", error);
+        clearVideo();
+        if (currentState === STATES.SPEAKING || currentState === STATES.PAUSED) {
+            elements.statusText.textContent = "Speaking; video unavailable";
+        }
+    }
+
+    function selectedSpeechVoice() {
+        if (!speechSynthesis || typeof speechSynthesis.getVoices !== "function") return null;
+        const voices = speechSynthesis.getVoices();
+        return voices.find(function (voice) {
+            return voice.name.toLowerCase().includes(elements.voiceSelect.value.toLowerCase());
+        }) || voices.find(function (voice) {
+            return voice.lang.toLowerCase().startsWith("en-in");
+        }) || null;
+    }
+
+    function waitForSpeechQueueToDrain(turnId, runId) {
+        if (turnId !== activeTurnId || runId !== playbackRunId) return;
+        if (speechSynthesis.speaking || speechSynthesis.pending) {
+            window.setTimeout(function () {
+                waitForSpeechQueueToDrain(turnId, runId);
+            }, 50);
+            return;
+        }
+        clearVideo();
+        elements.responseText.textContent = lastResponseText;
+        setState(STATES.IDLE, "Ready to talk");
+        elements.responseState.textContent = "Response ready";
+        hideSubtitle();
+    }
+
+    function queueSpeechFrom(text, turnId, startOffset) {
+        const runId = playbackRunId + 1;
+        playbackRunId = runId;
+        const chunks = splitSpeechChunks(text.slice(startOffset), startOffset);
+        if (!speechSynthesis || typeof window.SpeechSynthesisUtterance !== "function") {
+            showResponse(text);
+            clearVideo();
+            setState(STATES.ERROR, "Speech synthesis is not supported in this browser.");
+            elements.responseState.textContent = "Response ready · speech unavailable";
+            return;
+        }
+
+        let chunkIndex = 0;
+        function speakNextChunk() {
+            if (turnId !== activeTurnId || runId !== playbackRunId) return;
+            if (chunkIndex >= chunks.length) {
+                waitForSpeechQueueToDrain(turnId, runId);
                 return;
             }
-            throw new Error("Could not play the generated avatar video.");
+
+            const chunk = chunks[chunkIndex];
+            const utterance = new window.SpeechSynthesisUtterance(chunk.text);
+            utterance.lang = "en-IN";
+            utterance.rate = Number(elements.speechRate.value);
+            utterance.volume = isMuted ? 0 : 1;
+            const voice = selectedSpeechVoice();
+            if (voice) utterance.voice = voice;
+
+            utterance.onstart = function () {
+                if (turnId !== activeTurnId || runId !== playbackRunId) return;
+                setState(STATES.SPEAKING, "KALAM-GPT is speaking");
+                showAvatarVideo(turnId);
+                showResponse(text.slice(0, visibleCharacterCount));
+            };
+            utterance.onboundary = function (event) {
+                if (turnId !== activeTurnId || runId !== playbackRunId) return;
+                const index = Number(event.charIndex);
+                if (!Number.isFinite(index)) return;
+                const reportedLength = Number(event.charLength);
+                const remainingText = chunk.text.slice(index);
+                const fallbackBoundary = remainingText.search(/\s/);
+                const characterLength = reportedLength > 0
+                    ? reportedLength
+                    : Math.max(1, fallbackBoundary < 0 ? remainingText.length : fallbackBoundary);
+                const boundaryEnd = chunk.start + Math.min(
+                    chunk.text.length,
+                    index + characterLength
+                );
+                visibleCharacterCount = Math.max(visibleCharacterCount, boundaryEnd);
+                showResponse(text.slice(0, visibleCharacterCount));
+            };
+            utterance.onend = function () {
+                if (turnId !== activeTurnId || runId !== playbackRunId) return;
+                visibleCharacterCount = Math.max(visibleCharacterCount, chunk.start + chunk.text.length);
+                showResponse(text.slice(0, visibleCharacterCount));
+                chunkIndex += 1;
+                speakNextChunk();
+            };
+            utterance.onerror = function (event) {
+                if (turnId !== activeTurnId || runId !== playbackRunId ||
+                    event.error === "canceled" || event.error === "interrupted") return;
+                console.error("Avatar speech synthesis failed:", event.error);
+                playbackRunId += 1;
+                speechSynthesis.cancel();
+                showResponse(text);
+                clearVideo();
+                setState(STATES.ERROR, "Speech playback failed.");
+                elements.responseState.textContent = "Response ready · speech unavailable";
+            };
+            speechSynthesis.speak(utterance);
         }
+        speakNextChunk();
+    }
+
+    function startSpeakingResponse(text, turnId) {
+        lastResponseText = text;
+        visibleCharacterCount = 0;
+        showResponse("");
+        elements.responseState.textContent = "Speaking response...";
+        hideSubtitle();
+        queueSpeechFrom(text, turnId, 0);
     }
 
     async function handleUserInput(rawText) {
         const message = rawText.trim();
         if (!message) return;
-        if (requestController && currentState === STATES.PROCESSING) return;
-
         const turnId = cancelActiveTurn();
         requestController = new AbortController();
         const signal = requestController.signal;
@@ -350,7 +376,6 @@
         setState(STATES.PROCESSING, "Thinking & retrieving knowledge...");
         showSubtitle("Processing your question...");
 
-        let spokenText;
         try {
             const data = await fetchJson("/api/avatar/chat", {
                 method: "POST",
@@ -365,15 +390,12 @@
 
             activeConversationId = data.conversation_id;
             const responseText = data.response || "";
-            spokenText = data.spoken_text || responseText;
-            if (!spokenText.trim()) {
+            if (!responseText.trim()) {
                 throw new Error("KALAM-GPT returned no text to speak.");
             }
 
-            showResponse(responseText || spokenText);
-            appendTranscript("assistant", responseText || spokenText);
-            elements.responseState.textContent = "Response ready";
-            hideSubtitle();
+            appendTranscript("assistant", responseText);
+            startSpeakingResponse(responseText, turnId);
         } catch (error) {
             if (turnId !== activeTurnId || error.name === "AbortError") return;
             console.error("KALAM-GPT response request failed:", error);
@@ -381,35 +403,6 @@
             setState(STATES.ERROR, error.message || "Unable to prepare the avatar response.");
             showSubtitle("KALAM-GPT could not create a response just now. Check your connection and try again.");
             return;
-        }
-
-        if (turnId !== activeTurnId) return;
-        elements.responseState.textContent = "Preparing synchronized avatar video...";
-        setState(STATES.PROCESSING, "Preparing the synthetic voice and avatar...");
-        showSubtitle("Your response is ready. Preparing the avatar...");
-
-        try {
-            const videoUrl = await generateAvatarVideo(spokenText, signal);
-            if (turnId !== activeTurnId) return;
-            await playVideo(videoUrl);
-            if (turnId === activeTurnId) {
-                elements.responseState.textContent = "Response ready";
-                hideSubtitle();
-            }
-        } catch (error) {
-            if (turnId !== activeTurnId || error.name === "AbortError") return;
-            console.error("Avatar video generation failed:", {
-                status: error.status || null,
-                code: error.code || "avatar_video_error"
-            });
-            elements.responseState.textContent = "Text response ready · avatar video unavailable";
-            setState(STATES.ERROR, "Response ready; avatar unavailable");
-            const paymentGuidance = error.status === 402
-                ? " D-ID requires an account or payment action; check billing, plan access, and credits."
-                : "";
-            showSubtitle(
-                `Your response is ready, but the avatar could not speak it right now. Please check the avatar service and try again.${paymentGuidance}`
-            );
         } finally {
             if (turnId === activeTurnId) {
                 requestController = null;
@@ -501,29 +494,50 @@
     }
 
     function togglePlayback() {
-        if (!lastVideoUrl) return;
-        if (elements.avatarVideo.paused) {
-            if (!elements.avatarVideo.currentSrc) {
-                playVideo(lastVideoUrl).catch(handlePlaybackError);
-            } else {
-                elements.avatarVideo.play().catch(handlePlaybackError);
+        if (!lastResponseText || !speechSynthesis) return;
+        if (currentState === STATES.SPEAKING) {
+            speechSynthesis.pause();
+            elements.avatarVideo.pause();
+            setState(STATES.PAUSED, "Playback paused");
+        } else if (currentState === STATES.PAUSED) {
+            speechSynthesis.resume();
+            setState(STATES.SPEAKING, "KALAM-GPT is speaking");
+            if (!elements.avatarVideo.hidden && failedVideoTurnId !== activeTurnId) {
+                elements.avatarVideo.play().catch(function (error) {
+                    handleVideoFailure(activeTurnId, error);
+                });
             }
         } else {
-            elements.avatarVideo.pause();
+            replayLastResponse();
         }
     }
 
-    function handlePlaybackError(error) {
-        console.error("Avatar video playback failed:", error);
-        clearVideo();
-        setState(STATES.ERROR, error.message || "Could not play the avatar video.");
-        showSubtitle("Video playback failed. Replay the answer or try another question.");
+    function replayLastResponse() {
+        if (!lastResponseText) return;
+        const responseText = lastResponseText;
+        const turnId = cancelActiveTurn();
+        startSpeakingResponse(responseText, turnId);
+    }
+
+    function restartSpeechAfterMuteChange() {
+        if (currentState !== STATES.SPEAKING && currentState !== STATES.PAUSED) return;
+        if (visibleCharacterCount >= lastResponseText.length) return;
+
+        const wasPaused = currentState === STATES.PAUSED;
+        const turnId = activeTurnId;
+        const nextCharacter = visibleCharacterCount;
+        playbackRunId += 1;
+        speechSynthesis.cancel();
+        queueSpeechFrom(lastResponseText, turnId, nextCharacter);
+        if (wasPaused) {
+            speechSynthesis.pause();
+            elements.avatarVideo.pause();
+            setState(STATES.PAUSED, "Playback paused");
+        }
     }
 
     function cleanup() {
         cancelActiveTurn();
-        elements.avatarVideo.pause();
-        stopIdleAnimation();
         if (recognition && isUserListening) {
             try {
                 recognition.abort();
@@ -542,38 +556,28 @@
 
         elements.muteAudioBtn.addEventListener("click", function () {
             isMuted = !isMuted;
-            elements.avatarVideo.muted = isMuted;
             elements.muteIcon.textContent = isMuted ? "🔇" : "🔊";
             elements.muteText.textContent = isMuted ? "Sound Off" : "Sound On";
+            restartSpeechAfterMuteChange();
         });
         elements.playPauseBtn.addEventListener("click", togglePlayback);
         elements.replayBtn.addEventListener("click", function () {
-            if (lastVideoUrl) playVideo(lastVideoUrl).catch(handlePlaybackError);
-        });
-        elements.avatarVideo.addEventListener("playing", function () {
-            if (!elements.avatarVideo.currentSrc) return;
-            setState(STATES.SPEAKING, "KALAM-GPT is speaking");
-        });
-        elements.avatarVideo.addEventListener("pause", function () {
-            if (elements.avatarVideo.currentSrc && !elements.avatarVideo.ended &&
-                currentState === STATES.SPEAKING) {
-                setState(STATES.PAUSED, "Playback paused");
-            }
+            replayLastResponse();
         });
         elements.avatarVideo.addEventListener("ended", function () {
-            if (currentState !== STATES.SPEAKING || !elements.avatarVideo.currentSrc) return;
-            clearVideo();
-            setState(STATES.IDLE, "Ready to talk");
-            hideSubtitle();
+            if (elements.avatarVideo.hidden || activeVideoTurnId !== activeTurnId ||
+                currentState !== STATES.SPEAKING) return;
+            elements.avatarVideo.currentTime = 0;
+            elements.avatarVideo.play().catch(function (error) {
+                handleVideoFailure(activeTurnId, error);
+            });
         });
         elements.avatarVideo.addEventListener("error", function () {
-            if (!elements.avatarVideo.hidden) {
-                handlePlaybackError(new Error("The generated avatar video could not be loaded."));
-            }
-        });
-        elements.avatarIdleVideo.addEventListener("error", function () {
-            if (!elements.avatarIdleVideo.hidden) {
-                handleIdleAnimationError(new Error("The configured idle video could not be loaded."));
+            if (!elements.avatarVideo.hidden && activeVideoTurnId === activeTurnId) {
+                handleVideoFailure(
+                    activeTurnId,
+                    new Error("The prepared avatar video could not be loaded.")
+                );
             }
         });
 
@@ -609,11 +613,11 @@
         document.addEventListener("visibilitychange", function () {
             if (document.hidden && !elements.avatarVideo.paused) {
                 elements.avatarVideo.pause();
-            }
-            if (document.hidden) {
-                stopIdleAnimation();
-            } else if (currentState === STATES.IDLE || currentState === STATES.LISTENING) {
-                startIdleAnimation();
+            } else if (!document.hidden && currentState === STATES.SPEAKING &&
+                !elements.avatarVideo.hidden && failedVideoTurnId !== activeTurnId) {
+                elements.avatarVideo.play().catch(function (error) {
+                    handleVideoFailure(activeTurnId, error);
+                });
             }
         });
         window.addEventListener("pagehide", cleanup, { once: true });
