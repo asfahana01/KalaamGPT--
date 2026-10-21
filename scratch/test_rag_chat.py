@@ -1,23 +1,39 @@
+import gc
 import os
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app import app, get_db
+import app as app_module
+
+app = app_module.app
 
 class KalaamGPTRAGChatTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.original_db_path = app_module.DB_PATH
+        cls.temp_dir = tempfile.TemporaryDirectory()
+        app_module.DB_PATH = os.path.join(cls.temp_dir.name, "rag-test.db")
+        app_module.ensure_db()
+
+    @classmethod
+    def tearDownClass(cls):
+        app_module.DB_PATH = cls.original_db_path
+        gc.collect()
+        cls.temp_dir.cleanup()
+
     def setUp(self):
         app.config['TESTING'] = True
         app.config['SECRET_KEY'] = 'test-secret'
         self.client = app.test_client()
 
-        # Create a test user in DB & login in session
+        # Create a test user in the isolated database.
         with app.app_context():
-            db = get_db()
-            db.execute("DELETE FROM users WHERE email = 'rag_test_user@example.com'")
+            db = app_module.get_db()
             cursor = db.execute(
-                "INSERT INTO users (name, email, password_hash, created_at, updated_at, is_active, email_verified) VALUES (?, ?, ?, ?, ?, 1, 1)",
+                "INSERT INTO users (name, email, password_hash, created_at, updated_at, is_active) VALUES (?, ?, ?, ?, ?, 1)",
                 ("RAG Test User", "rag_test_user@example.com", "hash", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z")
             )
             db.commit()
@@ -25,11 +41,13 @@ class KalaamGPTRAGChatTestCase(unittest.TestCase):
 
     def tearDown(self):
         with app.app_context():
-            db = get_db()
+            db = app_module.get_db()
             db.execute("DELETE FROM users WHERE id = ?", (self.user_id,))
             db.commit()
+        self.client = None
 
-    def test_01_chat_creates_capsule_and_returns_rag_response(self):
+    @unittest.mock.patch("app.ask_kalam", return_value="A grounded answer about Dr. Kalam.")
+    def test_01_chat_creates_capsule_and_returns_rag_response(self, ask_kalam):
         with self.client.session_transaction() as sess:
             sess['user_id'] = self.user_id
             sess['user_name'] = "RAG Test User"
