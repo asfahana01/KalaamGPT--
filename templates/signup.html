@@ -9,7 +9,11 @@
 <body class="auth-page">
     <div class="auth-card">
         <div class="brand-wrap">
-            <div class="brand-icon">🚀</div>
+            <div class="brand-icon">
+                <div className="feature-icon">
+          <img src="static/images/logo-nobg.png" alt="" class="feature-logo" />
+        </div>
+            </div>
             <div>
                 <h1>KalaamGPT</h1>
                 <p>Create your account</p>
@@ -67,8 +71,7 @@
                 return;
             }
 
-            sessionStorage.setItem('pending_email', payload.email);
-            window.location.href = '/verify-otp?email=' + encodeURIComponent(payload.email);
+            window.location.href = '/login';
         });
     </script>
 </body>
