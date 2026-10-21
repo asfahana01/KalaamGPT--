@@ -1,4 +1,6 @@
 (function () {
+    "use strict";
+
     // 1. Preloader
     const loader = document.getElementById("landingLoader");
     function hideLoader() {
@@ -8,6 +10,22 @@
             if (loader.parentNode) loader.parentNode.removeChild(loader);
         }, 600);
     }
+
+    const heroPortrait = document.querySelector(".hero-portrait-image");
+    if (heroPortrait) {
+        const revealPortrait = () => {
+            heroPortrait.classList.add("is-visible");
+            hideLoader();
+        };
+
+        if (heroPortrait.complete) {
+            revealPortrait();
+        } else {
+            heroPortrait.addEventListener("load", revealPortrait, { once: true });
+            heroPortrait.addEventListener("error", revealPortrait, { once: true });
+        }
+    }
+
     window.addEventListener("load", hideLoader);
     setTimeout(hideLoader, 2000); // Fallback
 
@@ -106,4 +124,58 @@
             }
         });
     });
+
+    // 5. Calm, Accessible Scroll-Triggered Reveal Animations
+    function setupScrollReveals() {
+        const prefersReducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        const revealSelectors = [
+            ".section-header",
+            ".about-card",
+            ".timeline-item",
+            ".vision-card",
+            ".pura-card",
+            ".book-card",
+            ".quote-card",
+            ".award-card",
+            ".why-card",
+            ".cta-card"
+        ];
+
+        const elementsToReveal = document.querySelectorAll(revealSelectors.join(", "));
+
+        if (prefersReducedMotion || !("IntersectionObserver" in window)) {
+            // Immediately reveal everything with no delays or transforms
+            elementsToReveal.forEach((el) => {
+                el.classList.add("scroll-reveal", "in-view");
+            });
+            return;
+        }
+
+        const observerOptions = {
+            root: null,
+            rootMargin: "0px 0px -40px 0px",
+            threshold: 0.1
+        };
+
+        const revealObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("in-view");
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        elementsToReveal.forEach((el) => {
+            el.classList.add("scroll-reveal");
+            revealObserver.observe(el);
+        });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", setupScrollReveals);
+    } else {
+        setupScrollReveals();
+    }
 })();

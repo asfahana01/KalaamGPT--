@@ -10,7 +10,7 @@ import os
 # ============================================
 
 # --- Step 1: Load the knowledge base file ---
-print("📖 Loading knowledge base...")
+print(" Loading knowledge base...")
 with open("knowledge_base/kalam_data.txt", "r", encoding="utf-8") as f:
     full_text = f.read()
 
@@ -35,21 +35,21 @@ def split_into_chunks(text, chunk_size=300, overlap=50):
         i += chunk_size - overlap  # overlap keeps context
     return chunks
 
-print("\n✂️  Splitting into chunks...")
+print("\n  Splitting into chunks...")
 chunks = split_into_chunks(full_text, chunk_size=300, overlap=50)
 print(f"   → Created {len(chunks):,} chunks")
 
 # --- Step 3: Load embedding model ---
 # This model converts text into numbers (vectors)
 # Similar texts will have similar vectors
-print("\n🧠 Loading embedding model...")
+print("\n Loading embedding model...")
 print("   → This may take 1-2 minutes on first run...")
 model = SentenceTransformer("all-MiniLM-L6-v2")
-print("   → Model loaded! ✅")
+print("   → Model loaded! ")
 
 # --- Step 4: Connect to ChromaDB ---
 # ChromaDB stores our vectors locally in a folder
-print("\n🗄️  Connecting to ChromaDB...")
+print("\n Connecting to ChromaDB...")
 client = chromadb.PersistentClient(path="./chroma_db")
 
 # Delete existing collection if rebuilding
@@ -64,11 +64,11 @@ collection = client.create_collection(
     name="kalam_knowledge",
     metadata={"hnsw:space": "cosine"}  # cosine similarity for better search
 )
-print("   → Collection created! ✅")
+print("   → Collection created!")
 
 # --- Step 5: Generate embeddings and store ---
-print(f"\n⚡ Generating embeddings for {len(chunks):,} chunks...")
-print("   → This is the slow part, grab a chai! ☕")
+print(f"\n Generating embeddings for {len(chunks):,} chunks...")
+print("   → This is the slow part, grab a chai! ")
 print("   → Usually takes 3-7 minutes...")
 
 # Process in batches of 100 to avoid memory issues
@@ -92,12 +92,12 @@ for i in range(0, len(chunks), batch_size):
         ids=ids
     )
     
-    print(f"   → Batch {batch_num}/{total_batches} done ✅")
+    print(f"   → Batch {batch_num}/{total_batches} done ")
 
 # --- Step 6: Verify everything worked ---
-print(f"\n🎉 Ingestion Complete!")
-print(f"\n📊 ChromaDB Summary:")
+print(f"\n Ingestion Complete!")
+print(f"\n ChromaDB Summary:")
 print(f"   → Total chunks stored : {collection.count():,}")
 print(f"   → Saved to            : ./chroma_db/")
-print(f"\n✅ Your KalaamGPT knowledge base is ready!")
+print(f"\n Your KalaamGPT knowledge base is ready!")
 print(f"   → Now run: python rag_pipeline.py")

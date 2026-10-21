@@ -20,7 +20,9 @@
     <!-- Preloader -->
     <div id="landingLoader" class="loader-overlay">
       <div class="loader-content">
-        <div class="loader-logo">🤖</div>
+        <div className="feature-icon">
+          <img src="static/images/logo-nobg.png" alt="" class="feature-logo" />
+        </div>
         <div class="loader-title">DR. A.P.J. ABDUL KALAM</div>
         <div class="loader-subtitle">Loading Vision & Legacy...</div>
         <div class="loader-bar-wrap"><div class="loader-bar-inner"></div></div>
@@ -30,7 +32,9 @@
     <!-- Navigation Bar -->
     <nav class="landing-nav">
       <a href="#hero" class="nav-brand">
-        <span class="brand-icon-sm">🤖</span>
+        <div className="feature-icon">
+          <img src="static/images/logo-nobg.png" alt="" class="feature-logo" />
+        </div>
         <span class="brand-title">KalaamGPT</span>
       </a>
       <div class="nav-links">
@@ -52,6 +56,14 @@
     <!-- SECTION 1: HERO -->
     <section id="hero" class="hero-section">
       <div class="hero-backdrop"></div>
+      <div class="hero-portrait">
+        <img
+          src="/static/images/apj_landing.png"
+          alt="Dr. A.P.J. Abdul Kalam"
+          class="hero-portrait-image"
+          fetchpriority="high"
+        />
+      </div>
       <div class="hero-container">
         <div class="hero-badge">
           THE PEOPLE'S PRESIDENT &bull; MISSILE MAN OF INDIA
@@ -536,7 +548,9 @@
 
       <div class="why-card">
         <div class="why-header">
-          <div class="brand-icon">🧠</div>
+          <div className="feature-icon">
+          <img src="static/images/logo-nobg.png" alt="" class="feature-logo" />
+        </div>
           <div>
             <h3>Conversational AI Grounded in Authentic Writings</h3>
             <p class="why-badge">
