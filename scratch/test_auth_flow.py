@@ -1,115 +1,128 @@
+import gc
 import os
 import sys
+import tempfile
 import unittest
 
-# Ensure base dir in path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app import app, get_db, ensure_db, generate_otp, iso_after_minutes
+import app as app_module
+
+app = app_module.app
+
 
 class KalaamGPTAuthTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.original_db_path = app_module.DB_PATH
+        cls.temp_dir = tempfile.TemporaryDirectory()
+        app_module.DB_PATH = os.path.join(cls.temp_dir.name, "auth-test.db")
+        app_module.ensure_db()
+
+    @classmethod
+    def tearDownClass(cls):
+        app_module.DB_PATH = cls.original_db_path
+        gc.collect()
+        cls.temp_dir.cleanup()
+
     def setUp(self):
-        app.config['TESTING'] = True
-        app.config['SECRET_KEY'] = 'test-secret'
+        app.config["TESTING"] = True
+        app.config["SECRET_KEY"] = "test-secret"
         self.client = app.test_client()
+        self.email = "testuser_kalaam@example.com"
 
-    def test_01_health_and_public_landing(self):
-        res = self.client.get('/')
-        self.assertEqual(res.status_code, 200)
-        self.assertIn(b'DR. A.P.J. ABDUL KALAM', res.data)
-
-    def test_02_chat_page_requires_auth(self):
-        res = self.client.get('/chat')
-        self.assertEqual(res.status_code, 302)
-        self.assertIn('/login', res.headers['Location'])
-
-    def test_03_signup_creates_unverified_account_and_otp(self):
-        test_email = "testuser_kalaam@example.com"
-        # Cleanup if exists
+    def tearDown(self):
         with app.app_context():
-            db = get_db()
-            db.execute("DELETE FROM users WHERE email = ?", (test_email,))
+            db = app_module.get_db()
+            db.execute("DELETE FROM users WHERE email = ?", (self.email,))
             db.commit()
+        self.client = None
 
-        signup_payload = {
-            "full_name": "Test User Kalam",
-            "email": test_email,
-            "password": "Password123!",
-            "confirm_password": "Password123!"
-        }
-        res = self.client.post('/api/auth/signup', json=signup_payload)
-        self.assertEqual(res.status_code, 201)
-        data = res.get_json()
-        self.assertEqual(data["email"], test_email)
+    def signup(self):
+        return self.client.post(
+            "/api/auth/signup",
+            json={
+                "full_name": "Test User Kalam",
+                "email": self.email,
+                "password": "Password123!",
+                "confirm_password": "Password123!",
+            },
+        )
 
-        # Verify DB state
+    def test_public_pages_and_protected_chat(self):
+        self.assertEqual(self.client.get("/").status_code, 200)
+        self.assertEqual(self.client.get("/signup").status_code, 200)
+        self.assertEqual(self.client.get("/login").status_code, 200)
+        response = self.client.get("/chat")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login", response.headers["Location"])
+
+    def test_signup_creates_password_account_without_verification(self):
+        response = self.signup()
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.get_json()["email"], self.email)
+
         with app.app_context():
-            db = get_db()
-            user = db.execute("SELECT * FROM users WHERE email = ?", (test_email,)).fetchone()
+            user = app_module.get_db().execute(
+                "SELECT email, password_hash FROM users WHERE email = ?",
+                (self.email,),
+            ).fetchone()
             self.assertIsNotNone(user)
-            self.assertEqual(user["email_verified"], 0)
-            self.assertIsNotNone(user["otp_hash"])
-            self.assertEqual(user["otp_attempts"], 0)
+            self.assertEqual(user["email"], self.email)
+            self.assertNotEqual(user["password_hash"], "Password123!")
 
-    def test_04_unverified_user_cannot_login(self):
-        test_email = "testuser_kalaam@example.com"
-        login_payload = {
-            "email": test_email,
-            "password": "Password123!"
-        }
-        res = self.client.post('/api/auth/login', json=login_payload)
-        self.assertEqual(res.status_code, 403)
-        data = res.get_json()
-        self.assertIn("verify your email", data["error"].lower())
+        signup_page = self.client.get("/signup").get_data(as_text=True)
+        self.assertIn("window.location.href = '/login'", signup_page)
+        self.assertNotIn("/verify-otp", signup_page)
 
-    def test_05_otp_verification_flow(self):
-        test_email = "testuser_kalaam@example.com"
-        
-        # Test wrong OTP
-        wrong_res = self.client.post('/api/auth/verify-otp', json={"email": test_email, "otp": "000000"})
-        self.assertEqual(wrong_res.status_code, 400)
-        self.assertIn("Incorrect", wrong_res.get_json()["error"])
+    def test_login_requires_correct_password_and_creates_session(self):
+        self.assertEqual(self.signup().status_code, 201)
 
-        # Retrieve valid OTP from DB for testing
-        with app.app_context():
-            db = get_db()
-            # Set a known OTP for test
-            from werkzeug.security import generate_password_hash
-            known_otp = "482731"
-            db.execute(
-                "UPDATE users SET otp_hash = ?, otp_expires_at = ? WHERE email = ?",
-                (generate_password_hash(known_otp), iso_after_minutes(5), test_email)
-            )
-            db.commit()
+        bad_login = self.client.post(
+            "/api/auth/login",
+            json={"email": self.email, "password": "wrong-password"},
+        )
+        self.assertEqual(bad_login.status_code, 401)
+        with self.client.session_transaction() as session:
+            self.assertNotIn("user_id", session)
 
-        # Submit correct OTP
-        valid_res = self.client.post('/api/auth/verify-otp', json={"email": test_email, "otp": known_otp})
-        self.assertEqual(valid_res.status_code, 200)
-        self.assertIn("verified successfully", valid_res.get_json()["message"].lower())
+        login = self.client.post(
+            "/api/auth/login",
+            json={"email": self.email, "password": "Password123!", "remember": True},
+        )
+        self.assertEqual(login.status_code, 200)
+        self.assertEqual(login.get_json()["user"]["email"], self.email)
+        self.assertEqual(self.client.get("/chat").status_code, 200)
 
-        # Verify user is now email_verified = 1
-        with app.app_context():
-            db = get_db()
-            user = db.execute("SELECT * FROM users WHERE email = ?", (test_email,)).fetchone()
-            self.assertEqual(user["email_verified"], 1)
-            self.assertIsNone(user["otp_hash"])
+        logout = self.client.post("/api/auth/logout")
+        self.assertEqual(logout.status_code, 200)
+        self.assertEqual(self.client.get("/chat").status_code, 302)
 
-    def test_06_verified_user_can_login(self):
-        test_email = "testuser_kalaam@example.com"
-        login_payload = {
-            "email": test_email,
-            "password": "Password123!"
-        }
-        res = self.client.post('/api/auth/login', json=login_payload)
-        self.assertEqual(res.status_code, 200)
-        data = res.get_json()
-        self.assertEqual(data["user"]["email"], test_email)
+    def test_removed_verification_pages_and_endpoints_are_unavailable(self):
+        self.assertEqual(self.client.get("/verify-otp").status_code, 404)
+        self.assertEqual(self.client.get("/static/otp.js").status_code, 404)
+        self.assertEqual(
+            self.client.post("/api/auth/verify-otp", json={}).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.post("/api/auth/resend-otp", json={}).status_code,
+            404,
+        )
 
-        # Clean up test user
-        with app.app_context():
-            db = get_db()
-            db.execute("DELETE FROM users WHERE email = ?", (test_email,))
-            db.commit()
+    def test_signup_validation_is_preserved(self):
+        response = self.client.post(
+            "/api/auth/signup",
+            json={
+                "full_name": "Test User",
+                "email": self.email,
+                "password": "short",
+                "confirm_password": "short",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("at least 8 characters", response.get_json()["error"])
+
 
 if __name__ == "__main__":
     unittest.main()
