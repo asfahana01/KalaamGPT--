@@ -1486,11 +1486,11 @@ video {
 /* Hero Section */
 .hero-section {
     min-height: 100vh;
-    padding: 110px clamp(24px, 5vw, 64px) 52px;
+    padding: 0px 20px;
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
+    justify-content:space-between;
     text-align: left;
     position: relative;
     background-color: var(--bg-primary);
@@ -2766,4 +2766,55 @@ video {
     .mic-btn.listening {
         animation: none !important;
     }
+}
+
+/* Enlarge the existing hero image — keep apj_landing.png */
+/* Fix desktop hero image: preserve the full picture without cropping */
+@media (min-width: 901px) {
+  .hero-section {
+    min-height: calc(100vh - 36px);
+    padding: 68px 32px 0;
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    overflow: hidden;
+  }
+
+  .hero-portrait {
+    flex: 0 1 52%;
+    width: 52%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    align-self: flex-end;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .hero-portrait-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    max-height: calc(100vh - 105px);
+    object-fit: contain;
+    object-position: left bottom;
+    transform: none;
+  }
+
+  .hero-container {
+    flex: 1 1 0;
+    width: auto;
+    max-width: 560px;
+    margin: 0 0 70px;
+    padding: 0;
+    align-self: center;
+    align-items: flex-start;
+  }
+}
+@media (min-width: 901px) {
+  .hero-container {
+    transform: translateX(-120px);
+  }
 }
