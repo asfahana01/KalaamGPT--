@@ -67,22 +67,28 @@
       </div>
       <div class="hero-container">
         <div class="hero-badge">
-          THE PEOPLE'S PRESIDENT &bull; MISSILE MAN OF INDIA
+          THE PEOPLE'S PRESIDENT <span>&bull;</span> MISSILE MAN OF INDIA
         </div>
-        <h1 class="hero-title">DR. A.P.J. ABDUL KALAM</h1>
+
+        <h1 class="hero-title">
+          <span class="hero-title-main">DR. A.P.J. ABDUL</span>
+          <span class="hero-title-highlight">KALAM</span>
+        </h1>
+
         <p class="hero-quote-subtitle">
-          "Scientist. Teacher. Author. President. And above all, a dreamer who
+          Scientist. Teacher. Author. President. And above all, a dreamer who
           inspired millions to imagine a stronger, developed and self-reliant
-          India."
+          India.
         </p>
 
         <div class="hero-cta-group">
-          <a href="#about" class="ghost-pill-btn hero-btn"
-            >Explore His Journey ↓</a
-          >
-          <a href="/signup" class="primary-pill-btn hero-btn"
-            >Experience KalaamGPT →</a
-          >
+          <a href="#about" class="ghost-pill-btn hero-btn">
+            Explore His Journey <span>&darr;</span>
+          </a>
+
+          <a href="/signup" class="primary-pill-btn hero-btn">
+            Experience KalaamGPT <span>&rarr;</span>
+          </a>
         </div>
 
         <!-- Hotspot Pills -->
@@ -334,7 +340,7 @@
     <section id="pura" class="landing-section">
       <div class="section-header">
         <span class="sec-index">04.</span>
-        <h2 class="sec-heading">PURA — RURAL-URBAN INTEGRATION</h2>
+        <h2 class="sec-heading">PURA : RURAL-URBAN INTEGRATION</h2>
         <p class="sec-lead">
           Providing Urban Amenities in Rural Areas to empower 70% of India's
           population.
@@ -392,7 +398,14 @@
 
       <div class="books-grid">
         <div class="book-card">
-          <div class="book-cover">🔥</div>
+          <div class="book-cover">
+            <div className="feature-icon">
+              <img
+                src="static/images/wings-of-fire.png"
+                alt="Wings of Fire by Dr. A. P. J. Abdul Kalam"
+              />
+            </div>
+          </div>
           <h3>Wings of Fire</h3>
           <div class="book-tag">Autobiography</div>
           <p>
@@ -403,7 +416,12 @@
         </div>
 
         <div class="book-card">
-          <div class="book-cover">💡</div>
+          <div class="book-cover">
+            <img
+                src="static/images/ignited-minds.png"
+                alt="Wings of Fire by Dr. A. P. J. Abdul Kalam"
+              />
+          </div>
           <h3>Ignited Minds</h3>
           <div class="book-tag">Youth Motivation</div>
           <p>
@@ -413,7 +431,12 @@
         </div>
 
         <div class="book-card">
-          <div class="book-cover">🎯</div>
+          <div class="book-cover">
+            <img
+                src="static/images/india-2020.jpg"
+                alt="Wings of Fire by Dr. A. P. J. Abdul Kalam"
+              />
+          </div>
           <h3>India 2020</h3>
           <div class="book-tag">National Vision</div>
           <p>
@@ -423,7 +446,12 @@
         </div>
 
         <div class="book-card">
-          <div class="book-cover">📖</div>
+          <div class="book-cover">
+            <img
+                src="static/images/my-journey.png"
+                alt="Wings of Fire by Dr. A. P. J. Abdul Kalam"
+              />
+          </div>
           <h3>My Journey</h3>
           <div class="book-tag">Personal Reflections</div>
           <p>
@@ -433,7 +461,12 @@
         </div>
 
         <div class="book-card">
-          <div class="book-cover">✨</div>
+          <div class="book-cover">
+            <img
+                src="static/images/guiding-souls.webp"
+                alt="Wings of Fire by Dr. A. P. J. Abdul Kalam"
+              />
+          </div>
           <h3>Guiding Souls</h3>
           <div class="book-tag">Philosophy & Purpose</div>
           <p>
@@ -441,6 +474,20 @@
             spirituality, ethics, and living a purposeful life.
           </p>
         </div>
+        <div class="book-card">
+          <div class="book-cover">
+            <img
+                src="static/images/turning-points.png"
+                alt="Wings of Fire by Dr. A. P. J. Abdul Kalam"
+              />
+          </div>
+          <h3>Turning Points</h3>
+<div class="book-tag">Leadership & Inspiration</div>
+<p>
+  A compelling account of pivotal moments in India's journey and Dr. Kalam's
+  own life, sharing lessons on leadership, overcoming challenges, and turning
+  dreams into meaningful action.
+</p>
       </div>
     </section>
 
@@ -464,7 +511,7 @@
             result in action.
           </p>
           <div id="quoteAuthor" class="quote-author">
-            — Dr. A.P.J. Abdul Kalam
+            ~ Dr. A.P.J. Abdul Kalam
           </div>
         </div>
         <div class="quote-controls">
@@ -484,7 +531,7 @@
     <section id="awards" class="landing-section">
       <div class="section-header">
         <span class="sec-index">07.</span>
-        <h2 class="sec-heading">HONOURS & DECORATIONS</h2>
+        <h2 class="sec-heading">HONOURS</h2>
         <p class="sec-lead">
           National and international recognitions bestowed upon Dr. Kalam.
         </p>
@@ -550,8 +597,12 @@
       <div class="why-card">
         <div class="why-header">
           <div className="feature-icon">
-          <img src="static/images/logo-nobg.png" alt="" class="feature-logo" />
-        </div>
+            <img
+              src="static/images/logo-nobg.png"
+              alt=""
+              class="feature-logo"
+            />
+          </div>
           <div>
             <h3>Conversational AI Grounded in Authentic Writings</h3>
             <p class="why-badge">
